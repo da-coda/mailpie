@@ -1,29 +1,22 @@
 package main
 
 import (
-	"log"
-	"strings"
-
-	"github.com/emersion/go-sasl"
-	"github.com/emersion/go-smtp"
+	"gopkg.in/mail.v2"
 )
 
 func main() {
-	// Set up authentication information.
-	auth := sasl.NewPlainClient("", "", "")
+	m := mail.NewMessage()
+	m.SetHeader("From", "alex@example.com")
+	m.SetHeader("To", "bob@example.com", "cora@example.com")
+	m.SetAddressHeader("Cc", "dan@example.com", "Dan")
+	m.SetHeader("Subject", "Hello!")
+	m.SetBody("text/html", "Hello <b>Bob</b> and <i>Cora</i>!")
+	m.Attach("/home/daniel/Firefox_wallpaper.png")
 
-	// Connect to the server, authenticate, set the sender and recipient,
-	// and send the email all in one step.
-	to := []string{"recipient@example.net"}
-	msg := strings.NewReader(`
-		I
-	Gonna
-		Test
-This
-Shit!
-`)
-	err := smtp.SendMail("localhost:1025", auth, "sender@example.org", to, msg)
-	if err != nil {
-		log.Fatal(err)
+	d := mail.NewDialer("localhost", 1025, "user", "123456")
+
+	// Send the email to Bob, Cora and Dan.
+	if err := d.DialAndSend(m); err != nil {
+		panic(err)
 	}
 }

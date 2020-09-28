@@ -1,17 +1,111 @@
 package main
 
 import (
+	"fmt"
+	"github.com/gorilla/mux"
+	"github.com/mhale/smtpd"
 	"log"
-	"mailmon-go/pkg/backend"
-	"mailmon-go/pkg/server"
+	"mailmon-go/pkg/handler"
+	"mailmon-go/pkg/handler/api"
+	"net"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 )
 
-func main() {
-	be := backend.New()
-	s := server.NewDefaultServer(be)
+type errorOrigin string
 
-	log.Println("Starting server at", s.Addr)
-	if err := s.ListenAndServe(); err != nil {
-		log.Fatal(err)
+const (
+	SMTP errorOrigin = "smtp"
+	SPA  errorOrigin = "spa"
+	API  errorOrigin = "api"
+)
+
+type errorState struct {
+	err    error
+	origin errorOrigin
+}
+
+func main() {
+	errorChannel := make(chan errorState)
+	go serveSPA(errorChannel)
+	go serveSMTP(errorChannel)
+	go serveAPI(errorChannel)
+
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		<-signals
+		fmt.Println("Received SIGTERM")
+		os.Exit(0)
+	}()
+
+	var errorState errorState
+	for {
+		errorState = <-errorChannel
+		fmt.Println(errorState)
 	}
+}
+
+func serveSMTP(errorChannel chan errorState) {
+	addr := "127.0.0.1:1025"
+	srv := &smtpd.Server{
+		Addr:         addr,
+		Handler:      handler.SmtpHandler,
+		Appname:      "Mailmon",
+		Hostname:     "localhost",
+		AuthRequired: false,
+		AuthHandler: func(remoteAddr net.Addr, mechanism string, username []byte, password []byte, shared []byte) (bool, error) {
+			return true, nil
+		},
+		AuthMechs: map[string]bool{"PLAIN": true, "LOGIN": true},
+	}
+	log.Println("Starting smtp server at: ", addr)
+	err := srv.ListenAndServe()
+	if err != nil {
+		errorChannel <- errorState{err: err, origin: SMTP}
+	}
+}
+
+func serveSPA(errorChannel chan errorState) {
+	router := mux.NewRouter()
+	spa := handler.SpaHandler{StaticPath: "dist", IndexPath: "public/index.html"}
+	router.PathPrefix("/").Handler(spa).Methods("GET")
+
+	srv := &http.Server{
+		Handler:      router,
+		Addr:         "127.0.0.1:8000",
+		WriteTimeout: 15 * time.Second,
+		ReadTimeout:  15 * time.Second,
+	}
+
+	log.Println("Starting SPA server at: ", srv.Addr)
+	err := srv.ListenAndServe()
+	if err != nil {
+		errorChannel <- errorState{err: err, origin: SPA}
+	}
+}
+
+func serveAPI(errorChannel chan errorState) {
+	router := mux.NewRouter()
+	subrouter := router.PathPrefix("/api/").Subrouter()
+	api.RegisterApiRoutes(subrouter)
+	srv := &http.Server{
+		Handler:      router,
+		Addr:         "127.0.0.1:8001",
+		WriteTimeout: 15 * time.Second,
+		ReadTimeout:  15 * time.Second,
+	}
+	log.Println("Starting API server at: ", srv.Addr)
+	err := srv.ListenAndServe()
+	if err != nil {
+		errorChannel <- errorState{err: err, origin: API}
+	}
+}
+
+func (state errorState) String() string {
+	return fmt.Sprintf("error at %s: %s", state.origin, state.err.Error())
 }
