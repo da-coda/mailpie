@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/mhale/smtpd"
+	"github.com/r3labs/sse"
 	"log"
 	"mailmon-go/pkg/handler"
 	"mailmon-go/pkg/handler/api"
@@ -21,6 +22,7 @@ const (
 	SMTP errorOrigin = "smtp"
 	SPA  errorOrigin = "spa"
 	API  errorOrigin = "api"
+	SSE  errorOrigin = "sse"
 )
 
 type errorState struct {
@@ -31,6 +33,7 @@ type errorState struct {
 func main() {
 	errorChannel := make(chan errorState)
 	go serveSPA(errorChannel)
+	go serveSSE(errorChannel)
 	go serveSMTP(errorChannel)
 	go serveAPI(errorChannel)
 
@@ -72,7 +75,7 @@ func serveSMTP(errorChannel chan errorState) {
 
 func serveSPA(errorChannel chan errorState) {
 	router := mux.NewRouter()
-	spa := handler.SpaHandler{StaticPath: "dist", IndexPath: "public/index.html"}
+	spa := handler.SpaHandler{StaticPath: "dist", IndexPath: "dist/index.html"}
 	router.PathPrefix("/").Handler(spa).Methods("GET")
 
 	srv := &http.Server{
@@ -103,6 +106,20 @@ func serveAPI(errorChannel chan errorState) {
 	err := srv.ListenAndServe()
 	if err != nil {
 		errorChannel <- errorState{err: err, origin: API}
+	}
+}
+
+func serveSSE(errorChannel chan errorState) {
+	server := sse.New()
+	server.CreateStream("messages")
+	sseHandler := handler.NewOrGetSSEHandler(server)
+	router := http.NewServeMux()
+	router.Handle("/events", sseHandler)
+
+	log.Println("Starting SSE server at: 127.0.0.1:8002")
+	err := http.ListenAndServe("127.0.0.1:8002", router)
+	if err != nil {
+		errorChannel <- errorState{err: err, origin: SSE}
 	}
 }
 
