@@ -3,6 +3,7 @@ package store
 import (
 	"bytes"
 	"github.com/DusanKasan/parsemail"
+	"mailmon-go/pkg/event"
 	"net/mail"
 )
 
@@ -41,6 +42,8 @@ func (emails *Mails) add(data []byte) (mailInstance Mail, err error) {
 		return Mail{}, err
 	}
 	*emails = append(*emails, body)
+	events := event.NewOrGet()
+	events.Dispatch("mailReceived", "MailHandler", body)
 	return
 }
 
