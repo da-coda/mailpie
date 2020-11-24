@@ -10,7 +10,7 @@ func registerMailRoutes(router *mux.Router) {
 	router.HandleFunc("/", getMails).Methods("GET")
 }
 
-func getMails(writer http.ResponseWriter, request *http.Request) {
+func getMails(writer http.ResponseWriter, _ *http.Request) {
 	mails := store.GetMails()
 	respondWithJSON(writer, 200, mails)
 }
