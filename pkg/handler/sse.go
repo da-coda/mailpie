@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/DusanKasan/parsemail"
 	"github.com/r3labs/sse"
-	"mailmon-go/pkg/event"
+	"mailpie/pkg/event"
 	"net/http"
 )
 

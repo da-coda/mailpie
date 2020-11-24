@@ -3,7 +3,7 @@ package store
 import (
 	"bytes"
 	"github.com/DusanKasan/parsemail"
-	"mailmon-go/pkg/event"
+	"mailpie/pkg/event"
 	"net/mail"
 )
 

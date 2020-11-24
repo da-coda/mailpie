@@ -2,14 +2,14 @@ package main
 
 import (
 	"fmt"
-	"github.com/emersion/go-imap/backend/memory"
 	"github.com/emersion/go-imap/server"
 	"github.com/gorilla/mux"
 	"github.com/mhale/smtpd"
 	"github.com/r3labs/sse"
 	"log"
-	"mailmon-go/pkg/handler"
-	"mailmon-go/pkg/handler/api"
+	"mailpie/pkg/handler"
+	"mailpie/pkg/handler/api"
+	"mailpie/pkg/handler/imap"
 	"net"
 	"net/http"
 	"os"
@@ -62,7 +62,7 @@ func serveSMTP(errorChannel chan errorState) {
 	srv := &smtpd.Server{
 		Addr:         addr,
 		Handler:      handler.SmtpHandler,
-		Appname:      "Mailmon",
+		Appname:      "Mailpie",
 		Hostname:     "localhost",
 		AuthRequired: false,
 		AuthHandler: func(remoteAddr net.Addr, mechanism string, username []byte, password []byte, shared []byte) (bool, error) {
@@ -128,8 +128,7 @@ func serveSSE(errorChannel chan errorState) {
 }
 
 func serveIMAP(errorChannel chan errorState) {
-	// Create a memory backend
-	be := memory.New()
+	be := imap.NewBackend()
 
 	s := server.New(be)
 	s.Addr = ":1143"

@@ -2,7 +2,7 @@ package api
 
 import (
 	"github.com/gorilla/mux"
-	"mailmon-go/pkg/store"
+	"mailpie/pkg/store"
 	"net/http"
 )
 
