@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"github.com/emersion/go-imap/backend/memory"
+	"github.com/emersion/go-imap/server"
 	"github.com/gorilla/mux"
 	"github.com/mhale/smtpd"
 	"github.com/r3labs/sse"
@@ -23,6 +25,7 @@ const (
 	SPA  errorOrigin = "spa"
 	API  errorOrigin = "api"
 	SSE  errorOrigin = "sse"
+	IMAP errorOrigin = "imap"
 )
 
 type errorState struct {
@@ -36,6 +39,7 @@ func main() {
 	go serveSSE(errorChannel)
 	go serveSMTP(errorChannel)
 	go serveAPI(errorChannel)
+	go serveIMAP(errorChannel)
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
@@ -110,9 +114,9 @@ func serveAPI(errorChannel chan errorState) {
 }
 
 func serveSSE(errorChannel chan errorState) {
-	server := sse.New()
-	server.CreateStream("messages")
-	sseHandler := handler.NewOrGetSSEHandler(server)
+	sseServer := sse.New()
+	sseServer.CreateStream("messages")
+	sseHandler := handler.NewOrGetSSEHandler(sseServer)
 	router := http.NewServeMux()
 	router.Handle("/events", sseHandler)
 
@@ -120,6 +124,20 @@ func serveSSE(errorChannel chan errorState) {
 	err := http.ListenAndServe("127.0.0.1:8002", router)
 	if err != nil {
 		errorChannel <- errorState{err: err, origin: SSE}
+	}
+}
+
+func serveIMAP(errorChannel chan errorState) {
+	// Create a memory backend
+	be := memory.New()
+
+	s := server.New(be)
+	s.Addr = ":1143"
+	s.AllowInsecureAuth = true
+	log.Println("Starting IMAP server at 127.0.0.1:1143")
+	err := s.ListenAndServe()
+	if err != nil {
+		errorChannel <- errorState{err: err, origin: IMAP}
 	}
 }
 
