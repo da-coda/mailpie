@@ -14,7 +14,9 @@ type user struct {
 func NewUser(username string) b.User {
 	mailboxes := make(map[string]b.Mailbox)
 	user := &user{username: username, mailboxes: mailboxes}
+	_ = user.CreateMailbox("INBOX")
 	_ = user.CreateMailbox("Inbox")
+	_ = user.CreateMailbox("Sent")
 	return user
 }
 

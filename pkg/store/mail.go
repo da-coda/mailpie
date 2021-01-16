@@ -4,52 +4,26 @@ import (
 	"bytes"
 	"github.com/DusanKasan/parsemail"
 	"mailpie/pkg/event"
-	"net/mail"
 )
-
-type Mail struct {
-	From        mail.Address
-	To          []mail.Address
-	Cc          []mail.Address
-	Header      mail.Header
-	Body        string
-	DecodedBody string
-	Raw         []byte
-}
-
-func (mail Mail) FromAddress() string {
-	return mail.From.Address
-}
-
-func (mail Mail) FromName() string {
-	return mail.From.Name
-}
-
-func (mail Mail) ToAddresses() []mail.Address {
-	return mail.To
-}
-
-func (mail Mail) CcAddresses() []mail.Address {
-	return mail.Cc
-}
 
 type Mails []parsemail.Email
 
-func (emails *Mails) add(data []byte) (mailInstance Mail, err error) {
+func (emails *Mails) add(data []byte) (mailInstance parsemail.Email, err error) {
 
 	body, err := parsemail.Parse(bytes.NewReader(data))
 	if err != nil {
-		return Mail{}, err
+		return parsemail.Email{}, err
 	}
 	*emails = append(*emails, body)
 	events := event.NewOrGet()
 	events.Dispatch("mailReceived", "MailHandler", body)
-	return
+	events.Dispatch("rawMailReceived", "MailHandler", data)
+	return body, nil
 }
 
 var mails Mails
 
-func AddMail(data []byte) (mailInstance Mail, err error) {
+func AddMail(data []byte) (mailInstance parsemail.Email, err error) {
 	return mails.add(data)
 }
 

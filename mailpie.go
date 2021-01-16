@@ -90,6 +90,7 @@ func serveSPA(errorChannel chan errorState) {
 	}
 
 	log.Println("Starting SPA server at: ", srv.Addr)
+	//should run forever unless an error occurs
 	err := srv.ListenAndServe()
 	if err != nil {
 		errorChannel <- errorState{err: err, origin: SPA}
@@ -131,6 +132,7 @@ func serveIMAP(errorChannel chan errorState) {
 	be := imap.NewBackend()
 
 	s := server.New(be)
+	s.Debug = os.Stdout
 	s.Addr = ":1143"
 	s.AllowInsecureAuth = true
 	log.Println("Starting IMAP server at 127.0.0.1:1143")

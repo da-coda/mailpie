@@ -1,50 +1,54 @@
 package imap
 
 import (
-	"github.com/DusanKasan/parsemail"
+	"bytes"
+	"fmt"
 	"github.com/emersion/go-imap"
-	b "github.com/emersion/go-imap/backend"
+	imapBackend "github.com/emersion/go-imap/backend"
 	"io"
 	"mailpie/pkg/event"
 	"time"
 )
 
 type backend struct {
-	Magpie        b.User
-	UpdateChannel chan b.Update
+	Magpie        imapBackend.User
+	UpdateChannel chan imapBackend.Update
 }
 
-func NewBackend() b.Backend {
+func NewBackend() imapBackend.Backend {
 	user := NewUser("Magpie")
-	updates := make(chan b.Update)
+	updates := make(chan imapBackend.Update)
 	backend := &backend{Magpie: user, UpdateChannel: updates}
 	events := event.NewOrGet()
-	events.Subscribe("mailReceived", backend.Handler)
+	events.Subscribe("rawMailReceived", backend.Handler)
 	return backend
 }
 
-func (b backend) Updates() <-chan b.Update {
+func (b backend) Updates() <-chan imapBackend.Update {
 	return b.UpdateChannel
 }
 
-func (b backend) Login(_ *imap.ConnInfo, _, _ string) (b.User, error) {
+func (b backend) Login(info *imap.ConnInfo, user, password string) (imapBackend.User, error) {
 	return b.Magpie, nil
 }
 
-func (b backend) Handler(dispatcher string, data interface{}) {
-	mail := data.(parsemail.Email)
-	wrappedMail := WrappedParsemail{mail.Content, mail}
-	mb, _ := b.Magpie.GetMailbox("Inbox")
-	mb.CreateMessage([]string{imap.RecentFlag}, time.Now(), wrappedMail)
+func (b backend) Handler(_ string, data interface{}) {
+	mail := data.([]byte)
+
+	wrappedMail := WrappedParsemail{bytes.NewReader(mail), len(mail)}
+	mb, _ := b.Magpie.GetMailbox("INBOX")
+	err := mb.CreateMessage([]string{imap.RecentFlag}, time.Now(), wrappedMail)
+	if err != nil {
+		fmt.Errorf(err.Error())
+	}
+	b.UpdateChannel <- imapBackend.NewUpdate("Magpie", "Inbox")
 }
 
 type WrappedParsemail struct {
 	io.Reader
-	parsemail.Email
+	size int
 }
 
 func (w WrappedParsemail) Len() int {
-	var bytes []byte
-	_, _ = w.Content.Read(bytes)
-	return len(bytes)
+	return w.size
 }
