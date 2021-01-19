@@ -28,6 +28,8 @@ const (
 	IMAP errorOrigin = "imap"
 )
 
+const listenOnAddress = "0.0.0.0"
+
 type errorState struct {
 	err    error
 	origin errorOrigin
@@ -59,7 +61,7 @@ func main() {
 }
 
 func serveSMTP(errorChannel chan errorState) {
-	addr := "127.0.0.1:1025"
+	addr := listenOnAddress + ":1025"
 	srv := &smtpd.Server{
 		Addr:         addr,
 		Handler:      handler.SmtpHandler,
@@ -85,7 +87,7 @@ func serveSPA(errorChannel chan errorState) {
 
 	srv := &http.Server{
 		Handler:      router,
-		Addr:         "127.0.0.1:8000",
+		Addr:         listenOnAddress + ":8000",
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
@@ -104,7 +106,7 @@ func serveAPI(errorChannel chan errorState) {
 	api.RegisterApiRoutes(subrouter)
 	srv := &http.Server{
 		Handler:      router,
-		Addr:         "127.0.0.1:8001",
+		Addr:         listenOnAddress + ":8001",
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
@@ -116,7 +118,7 @@ func serveAPI(errorChannel chan errorState) {
 }
 
 func serveSSE(errorChannel chan errorState) {
-	address := "127.0.0.1:8002"
+	address := listenOnAddress + ":8002"
 	sseServer := sse.New()
 	sseServer.CreateStream("messages")
 	sseHandler := handler.NewOrGetSSEHandler(sseServer)
@@ -134,7 +136,7 @@ func serveIMAP(errorChannel chan errorState) {
 	be := imap.NewBackend()
 	s := server.New(be)
 	s.Debug = os.Stdout
-	s.Addr = "127.0.0.1:1143"
+	s.Addr = listenOnAddress + ":1143"
 	s.AllowInsecureAuth = true
 	logrus.WithField("Address", s.Addr).Info("Starting IMAP server")
 	err := s.ListenAndServe()
