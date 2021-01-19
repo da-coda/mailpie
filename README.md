@@ -27,6 +27,7 @@ and as an IMAP server for you mail client. Any mail sent via SMTP to MailPie wil
 - Codeception(PHP) Module for testing with the REST-API
 - Advanced SMTP and IMAP handling
 - Maybe supporting usage as a proxy mail server for mail logging?
+- Implement [spamassassin](https://github.com/Teamwork/spamc) support
 
 ## How to use MailPie?
 ### SMTP - settings in your project
