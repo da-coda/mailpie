@@ -6,7 +6,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/mhale/smtpd"
 	"github.com/r3labs/sse"
-	"log"
+	"github.com/sirupsen/logrus"
 	"mailpie/pkg/handler"
 	"mailpie/pkg/handler/api"
 	"mailpie/pkg/handler/imap"
@@ -46,14 +46,15 @@ func main() {
 
 	go func() {
 		<-signals
-		fmt.Println("Received SIGTERM")
+		fmt.Print("\r")
+		logrus.Info("Received SIGTERM")
 		os.Exit(0)
 	}()
 
 	var errorState errorState
 	for {
 		errorState = <-errorChannel
-		fmt.Println(errorState)
+		logrus.WithError(errorState.err).WithField("Origin", errorState.origin).Error("Service received unexpected error")
 	}
 }
 
@@ -70,7 +71,7 @@ func serveSMTP(errorChannel chan errorState) {
 		},
 		AuthMechs: map[string]bool{"PLAIN": true, "LOGIN": true},
 	}
-	log.Println("Starting smtp server at: ", addr)
+	logrus.WithField("Address", addr).Info("Starting SMTP server")
 	err := srv.ListenAndServe()
 	if err != nil {
 		errorChannel <- errorState{err: err, origin: SMTP}
@@ -89,7 +90,7 @@ func serveSPA(errorChannel chan errorState) {
 		ReadTimeout:  15 * time.Second,
 	}
 
-	log.Println("Starting SPA server at: ", srv.Addr)
+	logrus.WithField("Address", fmt.Sprintf("http://%s", srv.Addr)).Info("Starting SPA server")
 	//should run forever unless an error occurs
 	err := srv.ListenAndServe()
 	if err != nil {
@@ -107,7 +108,7 @@ func serveAPI(errorChannel chan errorState) {
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
-	log.Println("Starting API server at: ", srv.Addr)
+	logrus.WithField("Address", srv.Addr).Info("Starting API server")
 	err := srv.ListenAndServe()
 	if err != nil {
 		errorChannel <- errorState{err: err, origin: API}
@@ -115,14 +116,15 @@ func serveAPI(errorChannel chan errorState) {
 }
 
 func serveSSE(errorChannel chan errorState) {
+	address := "127.0.0.1:8002"
 	sseServer := sse.New()
 	sseServer.CreateStream("messages")
 	sseHandler := handler.NewOrGetSSEHandler(sseServer)
 	router := http.NewServeMux()
 	router.Handle("/events", sseHandler)
 
-	log.Println("Starting SSE server at: 127.0.0.1:8002")
-	err := http.ListenAndServe("127.0.0.1:8002", router)
+	logrus.WithField("Address", address).Info("Starting SSE server")
+	err := http.ListenAndServe(address, router)
 	if err != nil {
 		errorChannel <- errorState{err: err, origin: SSE}
 	}
@@ -130,12 +132,11 @@ func serveSSE(errorChannel chan errorState) {
 
 func serveIMAP(errorChannel chan errorState) {
 	be := imap.NewBackend()
-
 	s := server.New(be)
 	s.Debug = os.Stdout
-	s.Addr = ":1143"
+	s.Addr = "127.0.0.1:1143"
 	s.AllowInsecureAuth = true
-	log.Println("Starting IMAP server at 127.0.0.1:1143")
+	logrus.WithField("Address", s.Addr).Info("Starting IMAP server")
 	err := s.ListenAndServe()
 	if err != nil {
 		errorChannel <- errorState{err: err, origin: IMAP}

@@ -2,9 +2,9 @@ package imap
 
 import (
 	"bytes"
-	"fmt"
 	"github.com/emersion/go-imap"
 	imapBackend "github.com/emersion/go-imap/backend"
+	"github.com/sirupsen/logrus"
 	"io"
 	"mailpie/pkg/event"
 	"time"
@@ -39,7 +39,7 @@ func (b backend) Handler(_ string, data interface{}) {
 	mb, _ := b.Magpie.GetMailbox("INBOX")
 	err := mb.CreateMessage([]string{imap.RecentFlag}, time.Now(), wrappedMail)
 	if err != nil {
-		fmt.Errorf(err.Error())
+		logrus.WithError(err).Error("Unable to create message in IMAP handler")
 	}
 	b.UpdateChannel <- imapBackend.NewUpdate("Magpie", "Inbox")
 }

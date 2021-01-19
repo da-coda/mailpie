@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/DusanKasan/parsemail"
 	"github.com/r3labs/sse"
+	"github.com/sirupsen/logrus"
 	"mailpie/pkg/event"
 	"net/http"
 )
@@ -32,6 +33,7 @@ func (sseHandler *SSEHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 func (sseHandler *SSEHandler) Publish(from string, data interface{}) {
 	payload, err := json.Marshal(data.(parsemail.Email))
 	if err != nil {
+		logrus.WithError(err).Error("Unable to Marshal email in SSEHandler")
 		fmt.Println(err.Error())
 	}
 	e := sse.Event{ID: []byte("1"), Data: payload, Event: []byte("message")}
