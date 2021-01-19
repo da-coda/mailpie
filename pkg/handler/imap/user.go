@@ -1,7 +1,6 @@
 package imap
 
 import (
-	"errors"
 	b "github.com/emersion/go-imap/backend"
 	"github.com/emersion/go-imap/backend/memory"
 )
@@ -35,7 +34,7 @@ func (u user) ListMailboxes(_ bool) ([]b.Mailbox, error) {
 func (u user) GetMailbox(name string) (b.Mailbox, error) {
 	mailbox, ok := u.mailboxes[name]
 	if !ok {
-		return nil, errors.New("mailbox not found")
+		return nil, b.ErrNoSuchMailbox
 	}
 	return mailbox, nil
 }
@@ -43,7 +42,7 @@ func (u user) GetMailbox(name string) (b.Mailbox, error) {
 func (u *user) CreateMailbox(name string) error {
 	_, ok := u.mailboxes[name]
 	if ok {
-		return errors.New("mailbox allready exists")
+		return b.ErrMailboxAlreadyExists
 	}
 	u.mailboxes[name] = &memory.Mailbox{
 		Subscribed: true,
@@ -60,11 +59,11 @@ func (u *user) DeleteMailbox(name string) error {
 func (u *user) RenameMailbox(existingName, newName string) error {
 	mailbox, ok := u.mailboxes[existingName]
 	if !ok {
-		return errors.New("mailbox not found")
+		return b.ErrNoSuchMailbox
 	}
 	_, ok = u.mailboxes[newName]
 	if ok {
-		return errors.New("mailbox allready exists")
+		return b.ErrMailboxAlreadyExists
 	}
 	u.mailboxes[newName] = mailbox
 	delete(u.mailboxes, existingName)
