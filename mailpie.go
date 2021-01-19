@@ -80,7 +80,7 @@ func serveSMTP(errorChannel chan errorState) {
 
 func serveSPA(errorChannel chan errorState) {
 	router := mux.NewRouter()
-	spa := handler.SpaHandler{StaticPath: "dist", IndexPath: "dist/index.html"}
+	spa := handler.SpaHandler{}
 	router.PathPrefix("/").Handler(spa).Methods("GET")
 
 	srv := &http.Server{
