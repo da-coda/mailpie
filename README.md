@@ -16,7 +16,7 @@ without any actual SMTP servers.
 
 ### Features
 #### Implemented
-Currently, MailPie only supports simple SMTP and IMAP. You are able to add MailPie as an SMTP server für your project
+Currently, MailPie only supports simple SMTP and IMAP. You are able to add MailPie as an SMTP server for your project
 and as an IMAP server for you mail client. Any mail sent via SMTP to MailPie will be visible in your mail client.
 
 #### Planned
