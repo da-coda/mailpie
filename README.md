@@ -20,6 +20,7 @@ Currently, MailPie only supports simple SMTP and IMAP. You are able to add MailP
 and as an IMAP server for you mail client. Any mail sent via SMTP to MailPie will be visible in your mail client.
 
 #### Planned
+- Dockerize MailPie and put it on Dockerhub for simple usage
 - Webinterface with Vue 3 and Vuetify communicating over Server-Send-Events with the backend
 - REST-API that can be used in test suites for mail testing
 - Switch from hardcoded stuff like ports to a way to use configs and CLI flags; Add debug mode
