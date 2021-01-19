@@ -10,13 +10,9 @@ import (
 )
 
 type SpaHandler struct {
+	Dist  embed.FS
+	Index string
 }
-
-//go:embed "dist/index.html"
-var indexHtml string
-
-//go:embed "dist"
-var dist embed.FS
 
 func (h SpaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	path, err := filepath.Abs(r.URL.Path)
@@ -29,10 +25,10 @@ func (h SpaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	path = fmt.Sprintf("%s%s", "dist", path)
 	r.URL.Path = path
 
-	_, err = dist.Open(path)
+	_, err = h.Dist.Open(path)
 	if os.IsNotExist(err) {
 		w.Header().Set("Content-Type", "text/html")
-		bytesWritten, err := fmt.Fprint(w, indexHtml)
+		bytesWritten, err := fmt.Fprint(w, h.Index)
 		if err != nil {
 			logrus.WithError(err).WithField("Bytes written", bytesWritten).Error("Unable to send index.html")
 		}
@@ -45,5 +41,5 @@ func (h SpaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// otherwise, use http.FileServer to serve the static dir
-	http.FileServer(http.FS(dist)).ServeHTTP(w, r)
+	http.FileServer(http.FS(h.Dist)).ServeHTTP(w, r)
 }

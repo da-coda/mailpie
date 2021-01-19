@@ -1,6 +1,7 @@
 package main
 
 import (
+	"embed"
 	"fmt"
 	"github.com/emersion/go-imap/server"
 	"github.com/gorilla/mux"
@@ -81,8 +82,16 @@ func serveSMTP(errorChannel chan errorState) {
 }
 
 func serveSPA(errorChannel chan errorState) {
+	//go:embed "dist/index.html"
+	var indexHtml string
+
+	//go:embed "dist"
+	var dist embed.FS
 	router := mux.NewRouter()
-	spa := handler.SpaHandler{}
+	spa := handler.SpaHandler{
+		Dist:  dist,
+		Index: indexHtml,
+	}
 	router.PathPrefix("/").Handler(spa).Methods("GET")
 
 	srv := &http.Server{
