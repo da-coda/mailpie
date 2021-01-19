@@ -37,6 +37,7 @@ type errorState struct {
 }
 
 func main() {
+	logrus.SetLevel(logrus.DebugLevel)
 	errorChannel := make(chan errorState)
 	go serveSPA(errorChannel)
 	go serveSSE(errorChannel)
@@ -72,7 +73,10 @@ func serveSMTP(errorChannel chan errorState) {
 		AuthHandler: func(remoteAddr net.Addr, mechanism string, username []byte, password []byte, shared []byte) (bool, error) {
 			return true, nil
 		},
-		AuthMechs: map[string]bool{"PLAIN": true, "LOGIN": true},
+		LogWrite: func(remoteIP, verb, line string) {
+			logrus.WithField("ip", remoteIP).WithField("verb", verb).Debug(line)
+		},
+		AuthMechs: map[string]bool{"PLAIN": true, "LOGIN": true, "CRAM-MD5": false},
 	}
 	logrus.WithField("Address", addr).Info("Starting SMTP server")
 	err := srv.ListenAndServe()
@@ -144,7 +148,8 @@ func serveSSE(errorChannel chan errorState) {
 func serveIMAP(errorChannel chan errorState) {
 	be := imap.NewBackend()
 	s := server.New(be)
-	s.Debug = os.Stdout
+	imapLogger := logrus.New()
+	s.Debug = imapLogger.Writer()
 	s.Addr = listenOnAddress + ":1143"
 	s.AllowInsecureAuth = true
 	logrus.WithField("Address", s.Addr).Info("Starting IMAP server")

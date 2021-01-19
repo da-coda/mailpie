@@ -1,5 +1,7 @@
 package event
 
+import "github.com/sirupsen/logrus"
+
 type Handler func(dispatcher string, data interface{})
 
 type MessageQueue struct {
@@ -18,6 +20,7 @@ func NewOrGet() *MessageQueue {
 }
 
 func (mq MessageQueue) Dispatch(event string, from string, data interface{}) {
+	logrus.WithFields(map[string]interface{}{"event": event, "from": from}).Debug("New Event Dispatched")
 	subscriber, ok := mq.topics[event]
 	if !ok {
 		return
