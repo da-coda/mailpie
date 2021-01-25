@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://github.com/da-coda/mailpie/blob/master/readme/mailpie.png?raw=true" alt="Mailpie logo"/>
+</p>
+
 # MailPie
 **The Mailcatcher for testing and developing**
 
