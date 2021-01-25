@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="https://github.com/da-coda/mailpie/blob/master/readme/mailpie.png?raw=true" alt="Mailpie logo"/>
+  <img width="100px" src="https://github.com/da-coda/mailpie/blob/master/readme/magpie.png?raw=true" alt="Mailpie logo"/>
 </p>
+<h1 align="center">MailPie</h1>
 
-# MailPie
 **The Mailcatcher for testing and developing**
 
 ### Build with
