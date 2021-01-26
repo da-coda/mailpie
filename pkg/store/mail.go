@@ -1,32 +1,65 @@
 package store
 
 import (
-	"bytes"
-	"github.com/DusanKasan/parsemail"
 	"mailpie/pkg/event"
+	gomail "net/mail"
 )
 
-type Mails []parsemail.Email
+const NewMailStoredEvent event.Event = "newMailStored"
+const EventDispatcher = "MailStore"
 
-func (emails *Mails) add(data []byte) (mailInstance parsemail.Email, err error) {
+type MailStore struct {
+	mails        map[string]gomail.Message
+	messageQueue event.MessageQueue
+}
 
-	body, err := parsemail.Parse(bytes.NewReader(data))
-	if err != nil {
-		return parsemail.Email{}, err
+var mailStore *MailStore
+
+func CreateMailStore(messageQueue event.MessageQueue) *MailStore {
+	var store *MailStore
+	store = &MailStore{messageQueue: messageQueue}
+	store.mails = make(map[string]gomail.Message)
+	if mailStore == nil {
+		mailStore = store
 	}
-	*emails = append(*emails, body)
-	events := event.NewOrGet()
-	events.Dispatch("mailReceived", "MailHandler", body)
-	events.Dispatch("rawMailReceived", "MailHandler", data)
-	return body, nil
+	return mailStore
 }
 
-var mails Mails
+func (store *MailStore) Add(key string, mailData gomail.Message) error {
+	_, exists := store.mails[key]
+	if exists {
+		return AlreadyExistsError
+	}
 
-func AddMail(data []byte) (mailInstance parsemail.Email, err error) {
-	return mails.add(data)
+	return store.Set(key, mailData)
 }
 
-func GetMails() Mails {
-	return mails
+func (store *MailStore) Set(key string, data gomail.Message) error {
+	store.mails[key] = data
+	store.messageQueue.Dispatch(NewMailStoredEvent, EventDispatcher, data)
+	return nil
+}
+
+func (store *MailStore) Get() (map[string]gomail.Message, error) {
+	return store.mails, nil
+}
+
+func (store *MailStore) GetSingle(key string) (gomail.Message, error) {
+	mail, exists := store.mails[key]
+	if !exists {
+		return gomail.Message{}, KeyNotExistsError
+	}
+	return mail, nil
+}
+
+func (store *MailStore) GetMultiple(keys []string) (mails []gomail.Message, err error, notFoundKeys []string) {
+	for _, key := range keys {
+		mail, returnedErr := store.GetSingle(key)
+		if returnedErr == KeyNotExistsError {
+			err = KeyNotExistsError
+			notFoundKeys = append(notFoundKeys, key)
+		}
+		mails = append(mails, mail)
+	}
+	return
 }
