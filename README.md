@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="100px" src="https://github.com/da-coda/mailpie/blob/master/readme/magpie.png?raw=true" alt="Mailpie logo"/>
+  <img width="100px" src="https://github.com/da-coda/mailpie/blob/main/readme/magpie.png?raw=true" alt="Mailpie logo"/>
 </p>
 <h1 align="center">MailPie</h1>
 
