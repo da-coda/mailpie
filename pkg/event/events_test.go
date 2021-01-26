@@ -8,29 +8,29 @@ import (
 	"testing"
 )
 
-type EventsTestSuite struct {
+type EventsUnitTestSuite struct {
 	suite.Suite
 }
 
-func (suite *EventsTestSuite) AfterTest(suiteName, testName string) {
+func (suite *EventsUnitTestSuite) AfterTest(_, _ string) {
 	mq = nil
 }
 
-func (suite *EventsTestSuite) TestNewOrGet_New() {
+func (suite *EventsUnitTestSuite) TestNewOrGet_New() {
 	assert.Nil(suite.T(), mq, "MessageQueue should be nil at the beginning")
 	messagequeue := NewOrGet()
 	assert.NotNil(suite.T(), messagequeue, "NewOrGet should return an instance, Nil returned")
 	assert.NotNil(suite.T(), mq, "mq should not be Nil")
 }
 
-func (suite *EventsTestSuite) TestNewOrGet_Get() {
+func (suite *EventsUnitTestSuite) TestNewOrGet_Get() {
 	assert.Nil(suite.T(), mq, "MessageQueue should be nil at the beginning")
 	messagequeueNew := NewOrGet()
 	messagequeueGet := NewOrGet()
 	assert.Same(suite.T(), messagequeueNew, messagequeueGet, "Second NewOrGet call should return the same Instance as the first call")
 }
 
-func (suite *EventsTestSuite) TestSubscribe() {
+func (suite *EventsUnitTestSuite) TestSubscribe() {
 	handler := Handler(func(dispatcher string, data interface{}) { return })
 	messagequeue := NewOrGet()
 	_, exists := mq.topics["test"]
@@ -44,7 +44,7 @@ func (suite *EventsTestSuite) TestSubscribe() {
 	assert.Equal(suite.T(), funcName1, funcName2, "Subscribed handler is not the same as the one found in topic")
 }
 
-func (suite *EventsTestSuite) TestDispatch_WithSubscriber() {
+func (suite *EventsUnitTestSuite) TestDispatch_WithSubscriber() {
 	messagequeue := NewOrGet()
 	handler := Handler(func(dispatcher string, data interface{}) {
 		assert.Equal(suite.T(), "TestDispatch", dispatcher)
@@ -54,13 +54,13 @@ func (suite *EventsTestSuite) TestDispatch_WithSubscriber() {
 	messagequeue.Dispatch("test", "TestDispatch", "This is a Test")
 }
 
-func (suite *EventsTestSuite) TestDispatch_WithoutSubscriber() {
+func (suite *EventsUnitTestSuite) TestDispatch_WithoutSubscriber() {
 	messagequeue := NewOrGet()
 	assert.NotPanics(suite.T(), func() {
 		messagequeue.Dispatch("test", "TestDispatch", "This is a Test")
 	})
 }
 
-func TestEventsSuite(t *testing.T) {
-	suite.Run(t, new(EventsTestSuite))
+func TestEventsUnitTestSuite(t *testing.T) {
+	suite.Run(t, new(EventsUnitTestSuite))
 }
