@@ -19,7 +19,7 @@ func NewBackend() imapBackend.Backend {
 	user := NewUser("Magpie")
 	updates := make(chan imapBackend.Update)
 	backend := &backend{Magpie: user, UpdateChannel: updates}
-	events := event.NewOrGet()
+	events := event.CreateOrGet()
 	events.Subscribe("rawMailReceived", backend.Handler)
 	return backend
 }

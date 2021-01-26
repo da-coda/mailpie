@@ -21,7 +21,7 @@ func NewOrGetSSEHandler(Server *sse.Server) *SSEHandler {
 		return sseHandler
 	}
 	sseHandler = &SSEHandler{Server}
-	events := event.NewOrGet()
+	events := event.CreateOrGet()
 	events.Subscribe("mailReceived", sseHandler.Publish)
 	return sseHandler
 }

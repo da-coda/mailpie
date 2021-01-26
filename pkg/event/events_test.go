@@ -18,21 +18,21 @@ func (suite *EventsUnitTestSuite) AfterTest(_, _ string) {
 
 func (suite *EventsUnitTestSuite) TestNewOrGet_New() {
 	assert.Nil(suite.T(), mq, "MessageQueue should be nil at the beginning")
-	messagequeue := NewOrGet()
-	assert.NotNil(suite.T(), messagequeue, "NewOrGet should return an instance, Nil returned")
+	messagequeue := CreateOrGet()
+	assert.NotNil(suite.T(), messagequeue, "CreateOrGet should return an instance, Nil returned")
 	assert.NotNil(suite.T(), mq, "mq should not be Nil")
 }
 
 func (suite *EventsUnitTestSuite) TestNewOrGet_Get() {
 	assert.Nil(suite.T(), mq, "MessageQueue should be nil at the beginning")
-	messagequeueNew := NewOrGet()
-	messagequeueGet := NewOrGet()
-	assert.Same(suite.T(), messagequeueNew, messagequeueGet, "Second NewOrGet call should return the same Instance as the first call")
+	messagequeueNew := CreateOrGet()
+	messagequeueGet := CreateOrGet()
+	assert.Same(suite.T(), messagequeueNew, messagequeueGet, "Second CreateOrGet call should return the same Instance as the first call")
 }
 
 func (suite *EventsUnitTestSuite) TestSubscribe() {
 	handler := Handler(func(dispatcher string, data interface{}) { return })
-	messagequeue := NewOrGet()
+	messagequeue := CreateOrGet()
 	_, exists := mq.topics["test"]
 	assert.False(suite.T(), exists, "Topic 'test' should not exist already")
 	messagequeue.Subscribe("test", handler)
@@ -45,7 +45,7 @@ func (suite *EventsUnitTestSuite) TestSubscribe() {
 }
 
 func (suite *EventsUnitTestSuite) TestDispatch_WithSubscriber() {
-	messagequeue := NewOrGet()
+	messagequeue := CreateOrGet()
 	handler := Handler(func(dispatcher string, data interface{}) {
 		assert.Equal(suite.T(), "TestDispatch", dispatcher)
 		assert.Equal(suite.T(), "This is a Test", data)
@@ -55,7 +55,7 @@ func (suite *EventsUnitTestSuite) TestDispatch_WithSubscriber() {
 }
 
 func (suite *EventsUnitTestSuite) TestDispatch_WithoutSubscriber() {
-	messagequeue := NewOrGet()
+	messagequeue := CreateOrGet()
 	assert.NotPanics(suite.T(), func() {
 		messagequeue.Dispatch("test", "TestDispatch", "This is a Test")
 	})

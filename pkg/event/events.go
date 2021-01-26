@@ -10,7 +10,7 @@ type MessageQueue struct {
 
 var mq *MessageQueue
 
-func NewOrGet() *MessageQueue {
+func CreateOrGet() *MessageQueue {
 	if mq != nil {
 		return mq
 	}
