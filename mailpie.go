@@ -8,9 +8,11 @@ import (
 	"github.com/mhale/smtpd"
 	"github.com/r3labs/sse"
 	"github.com/sirupsen/logrus"
+	"mailpie/pkg/event"
 	"mailpie/pkg/handler"
 	"mailpie/pkg/handler/api"
 	"mailpie/pkg/handler/imap"
+	"mailpie/pkg/store"
 	"net"
 	"net/http"
 	"os"
@@ -38,10 +40,16 @@ type errorState struct {
 
 func main() {
 	logrus.SetLevel(logrus.DebugLevel)
+
+	globalMessageQueue := event.CreateOrGet()
+	globalMailStore := store.CreateMailStore(*globalMessageQueue)
+
 	errorChannel := make(chan errorState)
 	go serveSPA(errorChannel)
 	go serveSSE(errorChannel)
-	go serveSMTP(errorChannel)
+
+	smtpHandler := handler.CreateSmtpHandler(*globalMailStore)
+	go serveSMTP(errorChannel, smtpHandler)
 	go serveAPI(errorChannel)
 	go serveIMAP(errorChannel)
 
@@ -62,11 +70,11 @@ func main() {
 	}
 }
 
-func serveSMTP(errorChannel chan errorState) {
+func serveSMTP(errorChannel chan errorState, smtpHandler handler.SmtpHandler) {
 	addr := listenOnAddress + ":1025"
 	srv := &smtpd.Server{
 		Addr:         addr,
-		Handler:      handler.SmtpHandler,
+		Handler:      smtpHandler.Handle,
 		Appname:      "Mailpie",
 		Hostname:     "localhost",
 		AuthRequired: false,
