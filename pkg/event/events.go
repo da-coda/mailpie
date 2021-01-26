@@ -4,8 +4,10 @@ import "github.com/sirupsen/logrus"
 
 type Handler func(dispatcher string, data interface{})
 
+type Event string
+
 type MessageQueue struct {
-	topics map[string][]Handler
+	topics map[Event][]Handler
 }
 
 var mq *MessageQueue
@@ -14,12 +16,12 @@ func CreateOrGet() *MessageQueue {
 	if mq != nil {
 		return mq
 	}
-	topics := make(map[string][]Handler)
+	topics := make(map[Event][]Handler)
 	mq = &MessageQueue{topics}
 	return mq
 }
 
-func (mq MessageQueue) Dispatch(event string, from string, data interface{}) {
+func (mq MessageQueue) Dispatch(event Event, from string, data interface{}) {
 	logrus.WithFields(map[string]interface{}{"event": event, "from": from}).Debug("New Event Dispatched")
 	subscriber, ok := mq.topics[event]
 	if !ok {
@@ -30,6 +32,6 @@ func (mq MessageQueue) Dispatch(event string, from string, data interface{}) {
 	}
 }
 
-func (mq MessageQueue) Subscribe(event string, handler Handler) {
+func (mq MessageQueue) Subscribe(event Event, handler Handler) {
 	mq.topics[event] = append(mq.topics[event], handler)
 }
