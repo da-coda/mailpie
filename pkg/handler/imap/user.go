@@ -14,8 +14,11 @@ func NewUser(username string) b.User {
 	mailboxes := make(map[string]b.Mailbox)
 	user := &user{username: username, mailboxes: mailboxes}
 	_ = user.CreateMailbox("INBOX")
-	_ = user.CreateMailbox("Inbox")
-	_ = user.CreateMailbox("Sent")
+	_ = user.CreateMailbox("Sent Messages")
+	_ = user.CreateMailbox("Drafts")
+	_ = user.CreateMailbox("Junk")
+	_ = user.CreateMailbox("Deleted Messages")
+	_ = user.CreateMailbox("Archive")
 	return user
 }
 
@@ -46,7 +49,7 @@ func (u *user) CreateMailbox(name string) error {
 	}
 	u.mailboxes[name] = &memory.Mailbox{
 		Subscribed: true,
-		Messages:   nil,
+		Messages:   []*memory.Message{},
 	}
 	return nil
 }
