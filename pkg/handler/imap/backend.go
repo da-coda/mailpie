@@ -44,5 +44,13 @@ func (b backend) Handler(_ string, data interface{}) {
 	if err != nil {
 		logrus.WithError(err).Error("Unable to create message in IMAP handler")
 	}
-	b.UpdateChannel <- imapBackend.NewUpdate("Magpie", "Inbox")
+	update := imapBackend.NewUpdate("Magpie", "INBOX")
+	mailboxStatus, err := mb.Status([]imap.StatusItem{imap.StatusMessages, imap.StatusUidNext, imap.StatusRecent, imap.StatusUidValidity, imap.StatusRecent})
+	if err != nil {
+		logrus.WithError(err).Error("Unable to get mailbox status")
+	}
+	b.UpdateChannel <- &imapBackend.MailboxUpdate{
+		Update:        update,
+		MailboxStatus: mailboxStatus,
+	}
 }
