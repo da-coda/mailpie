@@ -52,14 +52,16 @@ func (store *MailStore) GetSingle(key string) (instances.Mail, error) {
 	return mail, nil
 }
 
-func (store *MailStore) GetMultiple(keys []string) (mails []instances.Mail, err error, notFoundKeys []string) {
+func (store *MailStore) GetMultiple(keys []string) (mails map[string]instances.Mail, err error, notFoundKeys []string) {
+	mails = make(map[string]instances.Mail)
 	for _, key := range keys {
 		mail, returnedErr := store.GetSingle(key)
 		if returnedErr == KeyNotExistsError {
 			err = KeyNotExistsError
 			notFoundKeys = append(notFoundKeys, key)
+			continue
 		}
-		mails = append(mails, mail)
+		mails[key] = mail
 	}
 	return
 }
