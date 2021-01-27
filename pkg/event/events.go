@@ -6,6 +6,14 @@ type Handler func(dispatcher string, data interface{})
 
 type Event string
 
+type Subscribable interface {
+	Subscribe(event Event, handler Handler)
+}
+
+type Dispatcher interface {
+	Dispatch(event Event, from string, data interface{})
+}
+
 type MessageQueue struct {
 	topics map[Event][]Handler
 }
