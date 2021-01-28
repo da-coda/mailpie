@@ -13,6 +13,10 @@
 [![GitHub release](https://img.shields.io/github/release/da-coda/mailpie.svg)](https://GitHub.com/da-coda/mailpie/releases/)
 [![GitHub stars](https://img.shields.io/github/stars/da-coda/mailpie.svg?style=social&label=Star&maxAge=2592000)](https://GitHub.com/da-coda/mailpie/stargazers/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
+
+![Current](https://github.com/da-coda/mailpie/workflows/Current/badge.svg?branch=main)
+![Release](https://github.com/da-coda/mailpie/workflows/Release/badge.svg?branch=release)
+![Develop](https://github.com/da-coda/mailpie/workflows/Develop/badge.svg?branch=develop)
 ### Build with
 This project was made possible thanks to the amazing work of other people
 * [parsemail](https://github.com/DusanKasan/parsemail)
