@@ -40,12 +40,25 @@ func (suite *MailUnitTestSuite) TestParseMail() {
 	assert.Equal(suite.T(), bodyFromParseMail, bodyFromTestParse, "Body from ParseMail and direct parsing are not equal")
 }
 
-func (suite *MailUnitTestSuite) TestRead() {
+func (suite *MailUnitTestSuite) TestRead_ValidMail() {
 	parsed, err := ParseMail(mail)
 	assert.Nil(suite.T(), err, "No error expected")
 	readParsed, err := ioutil.ReadAll(parsed)
 	assert.Nil(suite.T(), err, "No error expected")
 	assert.Equal(suite.T(), mail, readParsed)
+}
+
+func (suite *MailUnitTestSuite) TestRead_InvalidMail() {
+	invalidMail := []byte("I am not a Mail")
+	parsed, err := ParseMail(invalidMail)
+	assert.Nil(suite.T(), parsed, "parsed should be nil on error")
+	assert.Error(suite.T(), err, "missing error with invalid mail")
+}
+
+func (suite *MailUnitTestSuite) TestLen() {
+	parsed, err := ParseMail(mail)
+	assert.Nil(suite.T(), err, "No error expected")
+	assert.Equal(suite.T(), len(mail), parsed.Len(), "Length of parsed mail should be the Same as length of original mail")
 }
 
 func TestMailUnitTestSuite(t *testing.T) {
