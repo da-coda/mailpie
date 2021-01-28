@@ -85,12 +85,14 @@ func serveSMTP(errorChannel chan errorState) {
 	}
 }
 
-func serveSPA(errorChannel chan errorState) {
-	//go:embed "dist/index.html"
-	var indexHtml string
+//go:embed "dist/index.html"
+var indexHtml string
 
-	//go:embed "dist"
-	var dist embed.FS
+//go:embed "dist"
+var dist embed.FS
+
+func serveSPA(errorChannel chan errorState) {
+
 	router := mux.NewRouter()
 	spa := handler.SpaHandler{
 		Dist:  dist,
