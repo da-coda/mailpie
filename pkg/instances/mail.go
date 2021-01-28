@@ -15,6 +15,7 @@ type Mail struct {
 func (m *Mail) Read(p []byte) (n int, err error) {
 	if m.readIndex >= int64(len(m.RawMessage)) {
 		err = io.EOF
+		m.readIndex = 0
 		return
 	}
 
