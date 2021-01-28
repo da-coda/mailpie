@@ -5,6 +5,14 @@
 
 **The Mailcatcher for testing and developing**
 
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/da-coda/mailpie/graphs/commit-activity)
+[![made-with-Go](https://img.shields.io/badge/Made%20with-Go-1f425f.svg)](http://golang.org)
+[![GitHub go.mod Go version of a Go module](https://img.shields.io/github/go-mod/go-version/da-coda/mailpie.svg)](https://github.com/da-coda/mailpie)
+[![Go Report Card](https://goreportcard.com/badge/github.com/da-coda/mailpie)](https://goreportcard.com/report/github.com/da-coda/mailpie)
+[![GitHub license](https://img.shields.io/github/license/da-coda/mailpie.svg)](https://github.com/da-coda/mailpie/blob/master/LICENSE)
+[![GitHub release](https://img.shields.io/github/release/da-coda/mailpie.svg)](https://GitHub.com/da-coda/mailpie/releases/)
+[![GitHub stars](https://img.shields.io/github/stars/da-coda/mailpie.svg?style=social&label=Star&maxAge=2592000)](https://GitHub.com/da-coda/mailpie/stargazers/)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 ### Build with
 This project was made possible thanks to the amazing work of other people
 * [parsemail](https://github.com/DusanKasan/parsemail)
