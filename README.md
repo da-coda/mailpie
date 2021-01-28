@@ -7,7 +7,6 @@
 
 ### Build with
 This project was made possible thanks to the amazing work of other people
-* [parsemail](https://github.com/DusanKasan/parsemail)
 * [go-imap](https://github.com/emersion/go-imap)
 * [mux](https://github.com/gorilla/mux)
 * [smtpd](https://github.com/mhale/smtpd)
