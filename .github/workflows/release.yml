@@ -1,10 +1,10 @@
-name: Go-Unit-Tests
+name: Release
 
 on:
   push:
-    branches: [ develop ]
+    branches: [ release ]
   pull_request:
-    branches: [ develop ]
+    branches: [ release ]
 
 jobs:
 
@@ -23,10 +23,10 @@ jobs:
       uses: actions/setup-node@v2.1.4      
     
     - name: Build Frontend
-      run: npm install && npm run build 
-          
+      run: npm install && npm run build     
+    
     - name: Build
       run: go build -v ./...
 
     - name: Test
-      run: go test -short -v ./...
+      run: go test -v ./...
