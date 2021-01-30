@@ -1,32 +1,58 @@
 package store
 
 import (
-	"bytes"
-	"github.com/DusanKasan/parsemail"
 	"mailpie/pkg/event"
+	"mailpie/pkg/instances"
 )
 
-type Mails []parsemail.Email
+const NewMailStoredEvent event.Event = "newMailStored"
+const EventDispatcher = "MailStore"
 
-func (emails *Mails) add(data []byte) (mailInstance parsemail.Email, err error) {
+type MailStore struct {
+	mails        map[string]instances.Mail
+	messageQueue event.Dispatcher
+}
 
-	body, err := parsemail.Parse(bytes.NewReader(data))
-	if err != nil {
-		return parsemail.Email{}, err
+func CreateMailStore(messageQueue event.Dispatcher) *MailStore {
+	var store *MailStore
+	store = &MailStore{messageQueue: messageQueue}
+	store.mails = make(map[string]instances.Mail)
+	return store
+}
+
+func (store *MailStore) Add(key string, mailData instances.Mail) error {
+	_, exists := store.mails[key]
+	if exists {
+		return AlreadyExistsError
 	}
-	*emails = append(*emails, body)
-	events := event.NewOrGet()
-	events.Dispatch("mailReceived", "MailHandler", body)
-	events.Dispatch("rawMailReceived", "MailHandler", data)
-	return body, nil
+
+	return store.Set(key, mailData)
 }
 
-var mails Mails
-
-func AddMail(data []byte) (mailInstance parsemail.Email, err error) {
-	return mails.add(data)
+func (store *MailStore) Set(key string, data instances.Mail) error {
+	store.mails[key] = data
+	store.messageQueue.Dispatch(NewMailStoredEvent, EventDispatcher, data)
+	return nil
 }
 
-func GetMails() Mails {
-	return mails
+func (store *MailStore) GetSingle(key string) (instances.Mail, error) {
+	mail, exists := store.mails[key]
+	if !exists {
+		return instances.Mail{}, KeyNotExistsError
+	}
+	return mail, nil
+}
+
+func (store *MailStore) GetMultiple(keys []string) (mails map[string]instances.Mail, err error, notFoundKeys []string) {
+	mails = make(map[string]instances.Mail)
+	for _, key := range keys {
+		mail, returnedErr := store.GetSingle(key)
+		if returnedErr == KeyNotExistsError {
+			err = KeyNotExistsError
+			notFoundKeys = append(notFoundKeys, key)
+			continue
+		}
+		mails[key] = mail
+	}
+	return
 }
