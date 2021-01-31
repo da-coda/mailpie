@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/mhale/smtpd"
 	"github.com/sirupsen/logrus"
+	"mailpie/pkg/config"
 	"mailpie/pkg/event"
 	"mailpie/pkg/handler"
 	"mailpie/pkg/handler/imap"
@@ -15,6 +16,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 )
@@ -27,16 +29,21 @@ const (
 	IMAP errorOrigin = "imap"
 )
 
-const listenOnAddress = "0.0.0.0"
-
 type errorState struct {
 	err    error
 	origin errorOrigin
 }
 
 func main() {
-	logrus.SetLevel(logrus.DebugLevel)
+	err := config.Load(Run).Execute()
+	if err != nil {
+		logrus.WithError(err).Fatal("Unable to create configuration")
+	}
+}
 
+func Run() {
+	logrus.SetLevel(config.GetConfig().LogLevel)
+	logrus.Debugf("Config: %+v\n", config.GetConfig())
 	globalMessageQueue := event.CreateOrGet()
 	globalMailStore := store.CreateMailStore(*globalMessageQueue)
 
@@ -65,7 +72,7 @@ func main() {
 }
 
 func serveSMTP(errorChannel chan errorState, smtpHandler handler.SmtpHandler) {
-	addr := listenOnAddress + ":1025"
+	addr := config.GetConfig().NetworkConfigs.SMTPHost + ":" + strconv.Itoa(config.GetConfig().NetworkConfigs.SMTPPort)
 	srv := &smtpd.Server{
 		Addr:         addr,
 		Handler:      smtpHandler.Handle,
@@ -94,7 +101,6 @@ var indexHtml string
 var dist embed.FS
 
 func serveSPA(errorChannel chan errorState) {
-
 	router := mux.NewRouter()
 	spa := handler.SpaHandler{
 		Dist:  dist,
@@ -104,7 +110,7 @@ func serveSPA(errorChannel chan errorState) {
 
 	srv := &http.Server{
 		Handler:      router,
-		Addr:         listenOnAddress + ":8000",
+		Addr:         config.GetConfig().NetworkConfigs.HTTPHost + ":" + strconv.Itoa(config.GetConfig().NetworkConfigs.HTTPPort),
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
@@ -120,9 +126,9 @@ func serveSPA(errorChannel chan errorState) {
 func serveIMAP(errorChannel chan errorState) {
 	be := imap.NewBackend()
 	s := server.New(be)
-	imapLogger := logrus.New()
+	imapLogger := logrus.StandardLogger()
 	s.Debug = imapLogger.Writer()
-	s.Addr = listenOnAddress + ":1143"
+	s.Addr = config.GetConfig().NetworkConfigs.IMAPHost + ":" + strconv.Itoa(config.GetConfig().NetworkConfigs.IMAPPort)
 	s.AllowInsecureAuth = true
 	logrus.WithField("Address", s.Addr).Info("Starting IMAP server")
 	err := s.ListenAndServe()
