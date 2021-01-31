@@ -45,7 +45,7 @@ func main() {
 
 	smtpHandler := handler.CreateSmtpHandler(*globalMailStore)
 	go serveSMTP(errorChannel, smtpHandler)
-	go serveIMAP(errorChannel)
+	go serveIMAP(errorChannel, *globalMailStore)
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
@@ -117,8 +117,8 @@ func serveSPA(errorChannel chan errorState) {
 	}
 }
 
-func serveIMAP(errorChannel chan errorState) {
-	be := imap.NewBackend()
+func serveIMAP(errorChannel chan errorState, mailStore store.MailStore) {
+	be := imap.NewBackend(mailStore)
 	s := server.New(be)
 	imapLogger := logrus.New()
 	s.Debug = imapLogger.Writer()

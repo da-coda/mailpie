@@ -3,6 +3,7 @@ package imap
 import (
 	b "github.com/emersion/go-imap/backend"
 	"github.com/emersion/go-imap/backend/memory"
+	"mailpie/pkg/store"
 )
 
 type user struct {
@@ -10,7 +11,7 @@ type user struct {
 	username  string
 }
 
-func NewUser(username string) b.User {
+func NewUser(username string, mailStore store.MailStore) b.User {
 	mailboxes := make(map[string]b.Mailbox)
 	user := &user{username: username, mailboxes: mailboxes}
 	_ = user.CreateMailbox("INBOX")
@@ -47,6 +48,7 @@ func (u *user) CreateMailbox(name string) error {
 	if ok {
 		return b.ErrMailboxAlreadyExists
 	}
+	u.mailboxes[name] = &Mailbox{User: u}
 	u.mailboxes[name] = &memory.Mailbox{
 		Subscribed: true,
 		Messages:   []*memory.Message{},

@@ -15,8 +15,8 @@ type backend struct {
 	UpdateChannel chan imapBackend.Update
 }
 
-func NewBackend() imapBackend.Backend {
-	user := NewUser("Magpie")
+func NewBackend(mailStore store.MailStore) imapBackend.Backend {
+	user := NewUser("Magpie", mailStore)
 	updates := make(chan imapBackend.Update)
 	backend := &backend{Magpie: user, UpdateChannel: updates}
 	events := event.CreateOrGet()
@@ -37,7 +37,7 @@ func (b backend) Handler(_ string, data interface{}) {
 	mb, err := b.Magpie.GetMailbox("INBOX")
 
 	if err != nil {
-		logrus.WithError(err).Error("Unable to get mailbox 'INBOX' in IMAP handler")
+		logrus.WithError(err).Error("Unable to get Mailbox 'INBOX' in IMAP handler")
 	}
 
 	err = mb.CreateMessage([]string{imap.RecentFlag}, time.Now(), &mail)
@@ -47,7 +47,7 @@ func (b backend) Handler(_ string, data interface{}) {
 	update := imapBackend.NewUpdate("Magpie", "INBOX")
 	mailboxStatus, err := mb.Status([]imap.StatusItem{imap.StatusMessages, imap.StatusUidNext, imap.StatusRecent, imap.StatusUidValidity, imap.StatusRecent})
 	if err != nil {
-		logrus.WithError(err).Error("Unable to get mailbox status")
+		logrus.WithError(err).Error("Unable to get Mailbox status")
 	}
 	b.UpdateChannel <- &imapBackend.MailboxUpdate{
 		Update:        update,

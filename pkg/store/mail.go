@@ -10,6 +10,7 @@ const EventDispatcher = "MailStore"
 
 type MailStore struct {
 	mails        map[string]instances.Mail
+	mailSequence []string
 	messageQueue event.Dispatcher
 }
 
@@ -25,7 +26,7 @@ func (store *MailStore) Add(key string, mailData instances.Mail) error {
 	if exists {
 		return AlreadyExistsError
 	}
-
+	store.mailSequence = append(store.mailSequence, key)
 	return store.Set(key, mailData)
 }
 
@@ -55,4 +56,25 @@ func (store *MailStore) GetMultiple(keys []string) (mails map[string]instances.M
 		mails[key] = mail
 	}
 	return
+}
+
+func (store *MailStore) GetAll() (mails map[string]instances.Mail) {
+	return store.mails
+}
+
+func (store MailStore) GetSeqNumberForKey(key string) (uint32, error) {
+	_, exists := store.mails[key]
+	if !exists {
+		return 0, KeyNotExistsError
+	}
+	for index, mailKey := range store.mailSequence {
+		if mailKey == key {
+			return uint32(index), nil
+		}
+	}
+	return 0, KeyNotExistsError
+}
+
+func (store MailStore) GetMailBySeqNumber(seq int) instances.Mail {
+	return store.mails[store.mailSequence[seq]]
 }
