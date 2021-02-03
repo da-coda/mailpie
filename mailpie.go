@@ -34,15 +34,12 @@ type errorState struct {
 	origin errorOrigin
 }
 
-func main() {
-	err := config.Load(Run).Execute()
-	if err != nil {
-		logrus.WithError(err).Fatal("Unable to create configuration")
-	}
+func init() {
+	config.Load()
 }
 
-func Run() {
-	logrus.SetLevel(config.GetConfig().LogLevel)
+func main() {
+	logrus.SetLevel(config.GetConfig().LogrusLevel)
 	logrus.Debugf("Config: %+v\n", config.GetConfig())
 	globalMessageQueue := event.CreateOrGet()
 	globalMailStore := store.CreateMailStore(*globalMessageQueue)
@@ -72,7 +69,7 @@ func Run() {
 }
 
 func serveSMTP(errorChannel chan errorState, smtpHandler handler.SmtpHandler) {
-	addr := config.GetConfig().NetworkConfigs.SMTPHost + ":" + strconv.Itoa(config.GetConfig().NetworkConfigs.SMTPPort)
+	addr := config.GetConfig().NetworkConfigs.SMTP.Host + ":" + strconv.Itoa(config.GetConfig().NetworkConfigs.SMTP.Port)
 	srv := &smtpd.Server{
 		Addr:         addr,
 		Handler:      smtpHandler.Handle,
@@ -110,7 +107,7 @@ func serveSPA(errorChannel chan errorState) {
 
 	srv := &http.Server{
 		Handler:      router,
-		Addr:         config.GetConfig().NetworkConfigs.HTTPHost + ":" + strconv.Itoa(config.GetConfig().NetworkConfigs.HTTPPort),
+		Addr:         config.GetConfig().NetworkConfigs.HTTP.Host + ":" + strconv.Itoa(config.GetConfig().NetworkConfigs.HTTP.Port),
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
@@ -128,7 +125,7 @@ func serveIMAP(errorChannel chan errorState) {
 	s := server.New(be)
 	imapLogger := logrus.StandardLogger()
 	s.Debug = imapLogger.Writer()
-	s.Addr = config.GetConfig().NetworkConfigs.IMAPHost + ":" + strconv.Itoa(config.GetConfig().NetworkConfigs.IMAPPort)
+	s.Addr = config.GetConfig().NetworkConfigs.IMAP.Host + ":" + strconv.Itoa(config.GetConfig().NetworkConfigs.IMAP.Port)
 	s.AllowInsecureAuth = true
 	logrus.WithField("Address", s.Addr).Info("Starting IMAP server")
 	err := s.ListenAndServe()

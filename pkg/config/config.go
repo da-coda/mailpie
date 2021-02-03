@@ -1,29 +1,33 @@
 package config
 
-import "github.com/sirupsen/logrus"
+import (
+	"github.com/sirupsen/logrus"
+)
 
 var configuration Config
 
 type Config struct {
-	LogLevel       logrus.Level
-	logLevel       int
-	NetworkConfigs NetworkConfigs
-	EnableIMAP     bool
-	EnableSMTP     bool
-	EnableHTTP     bool
-}
-
-type NetworkConfigs struct {
-	SMTPHost string
-	IMAPHost string
-	HTTPHost string
-
-	SMTPPort int
-	IMAPPort int
-	HTTPPort int
+	LogrusLevel    logrus.Level
+	LogLevel       int `yaml:"log_level" flag:"logLevel"`
+	NetworkConfigs struct {
+		SMTP struct {
+			Host string `flag:"smtpHost"`
+			Port int    `flag:"smtpPort"`
+		}
+		IMAP struct {
+			Host string `flag:"imapHost"`
+			Port int    `flag:"imapPort"`
+		}
+		HTTP struct {
+			Host string `flag:"httpHost"`
+			Port int    `flag:"httpPort"`
+		}
+	}
+	EnableIMAP bool `yaml:"enable_imap" flag:"enableImap"`
+	EnableSMTP bool `yaml:"enable_smtp" flag:"enableSmtp"`
+	EnableHTTP bool `yaml:"enable_http" flag:"enableHttp"`
 }
 
 func GetConfig() Config {
-	configuration.LogLevel = logrus.Level(configuration.logLevel)
 	return configuration
 }
