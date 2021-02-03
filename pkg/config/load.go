@@ -2,30 +2,26 @@ package config
 
 import (
 	"flag"
-	"fmt"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 	"io"
 	"os"
+	"os/user"
 	"reflect"
 	"strconv"
 )
 
-var (
-	homeDir, _ = os.UserHomeDir()
-	configPath = fmt.Sprintf("%s/%s", homeDir, ".config/mailpie.yml")
-)
-
 func Load() {
+	initFlags()
+	flag.Parse()
 	createConfig := false
-	file, err := os.Open(configPath)
+	file, err := os.Open(flag.Lookup("config").Value.String())
 	if err != nil {
 		createConfig = true
 	} else {
 		configuration = parseConfig(configuration, file)
+		defer file.Close()
 	}
-	initFlags()
-	flag.Parse()
 	configuration = combineConfigAndFlags(configuration)
 	configuration.LogrusLevel = logrus.Level(configuration.LogLevel)
 	if createConfig {
@@ -44,6 +40,9 @@ func initFlags() {
 	flag.Bool("enableImap", true, "Enables the IMAP handler")
 	flag.Bool("enableSmtp", true, "Enables the SMTP handler")
 	flag.Bool("enableHttp", true, "Enables the SPA")
+	usr, _ := user.Current()
+	dir := usr.HomeDir
+	flag.String("config", dir+"/.config/mailpie.yml", "sets the config file path. If file not exits, MailPie will create one with default values.")
 }
 
 func parseConfig(config Config, file io.Reader) Config {
@@ -92,6 +91,10 @@ func parseField(fieldToParse reflect.Value, fieldType *reflect.StructField) {
 	if !exists {
 		return
 	}
+	if fieldToParse.IsZero() {
+		overrideValue(&fieldToParse, flag.Lookup(flagName))
+		return
+	}
 	flag.Visit(func(f *flag.Flag) {
 		if f.Name == flagName {
 			overrideValue(&fieldToParse, f)
@@ -129,11 +132,12 @@ func writeConfig(config Config) {
 		logrus.WithError(err).Error("unable to marshal config")
 		return
 	}
-	file, err := os.OpenFile(configPath, os.O_WRONLY|os.O_CREATE, 0755)
+	file, err := os.OpenFile(flag.Lookup("config").Value.String(), os.O_WRONLY|os.O_CREATE, 0755)
 	if err != nil {
 		logrus.WithError(err).Error("unable to create config file")
 		return
 	}
+	defer file.Close()
 	_, err = file.Write(configBytes)
 	if err != nil {
 		logrus.WithError(err).Error("unable to write to config file")
