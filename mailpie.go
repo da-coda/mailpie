@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"flag"
 	"fmt"
 	"github.com/emersion/go-imap/server"
 	"github.com/gorilla/mux"
@@ -34,11 +35,9 @@ type errorState struct {
 	origin errorOrigin
 }
 
-func init() {
-	config.Load()
-}
-
 func main() {
+	err := config.Load(flag.CommandLine)
+	logrus.WithError(err).Fatal("Error during configuration setup")
 	logrus.SetLevel(config.GetConfig().LogrusLevel)
 	logrus.Debugf("Config: %+v\n", config.GetConfig())
 	globalMessageQueue := event.CreateOrGet()

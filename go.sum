@@ -15,6 +15,8 @@ github.com/martinlindhe/base36 v1.0.0 h1:eYsumTah144C0A8P1T/AVSUk5ZoLnhfYFM3OGQx
 github.com/martinlindhe/base36 v1.0.0/go.mod h1:+AtEs8xrBpCeYgSLoY/aJ6Wf37jtBuR0s35750M27+8=
 github.com/mhale/smtpd v0.0.0-20200509114310-d7a07f752336 h1:Rp+Y5NAgnPvY7FeVNPMRZdiEQzrHTw0cL+cK9AU1Gow=
 github.com/mhale/smtpd v0.0.0-20200509114310-d7a07f752336/go.mod h1:qqKwvL5sfYgFxcMy96Kjx3TCorMfDaQBvmEL2nvdidc=
+github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
+github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/sirupsen/logrus v1.7.0 h1:ShrD1U9pZB12TX0cVy0DtePoCH97K8EtX+mg7ZARUtM=

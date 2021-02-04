@@ -2,6 +2,7 @@ package config
 
 import (
 	"flag"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 	"io"
@@ -11,22 +12,46 @@ import (
 	"strconv"
 )
 
-func Load() {
+func Load(flags *flag.FlagSet) error {
 	initFlags()
 	flag.Parse()
 	createConfig := false
-	file, err := os.Open(flag.Lookup("config").Value.String())
+	configPath := flags.Lookup("config").Value.String()
+	file, err := os.Open(configPath)
 	if err != nil {
 		createConfig = true
 	} else {
-		configuration = parseConfig(configuration, file)
-		defer file.Close()
+		configuration, err = parseConfig(configuration, file)
+		if err != nil {
+			//We only log this error and don't return so that we can still run MailPie with the commandline flags
+			logrus.WithError(err).Error("Unable to parse config file")
+		}
+		defer func() {
+			err := file.Close()
+			if err != nil {
+				logrus.WithError(err).Error("Unable to close config file after read.")
+			}
+		}()
 	}
-	configuration = combineConfigAndFlags(configuration)
+	configuration, err = combineConfigAndFlags(configuration, flags)
+	if err != nil {
+		return errors.Wrap(err, "Error combining config and flags")
+	}
 	configuration.LogrusLevel = logrus.Level(configuration.LogLevel)
 	if createConfig {
-		writeConfig(configuration)
+		file, err := os.OpenFile(configPath, os.O_WRONLY|os.O_CREATE, 0755)
+		if err != nil {
+			return errors.Wrap(err, "couldn't create file to write config to")
+		}
+		defer func() {
+			err := file.Close()
+			if err != nil {
+				logrus.WithError(err).Error("Unable to close config file after write.")
+			}
+		}()
+		return errors.Wrap(writeConfig(configuration, file), "unable to create config file")
 	}
+	return nil
 }
 
 func initFlags() {
@@ -45,65 +70,76 @@ func initFlags() {
 	flag.String("config", dir+"/.config/mailpie.yml", "sets the config file path. If file not exits, MailPie will create one with default values.")
 }
 
-func parseConfig(config Config, file io.Reader) Config {
+func parseConfig(config Config, file io.Reader) (Config, error) {
 	readFile, err := io.ReadAll(file)
 	if err != nil {
-		logrus.WithError(err).Info("no config found, will be created")
-		return Config{}
+		return Config{}, err
 	}
 	err = yaml.Unmarshal(readFile, &config)
 	if err != nil {
-		logrus.WithError(err).Fatal("couldn't unmarshal config file")
-		return Config{}
+		return Config{}, err
 	}
-	return config
+	return config, nil
 }
 
-func combineConfigAndFlags(config Config) Config {
+func combineConfigAndFlags(config Config, flagSet *flag.FlagSet) (Config, error) {
 	reflectConfig := reflect.ValueOf(&config)
 	for i := 0; i < reflect.Indirect(reflectConfig).NumField(); i++ {
 		field := reflect.Indirect(reflectConfig).Field(i)
 		if field.Kind() == reflect.Struct {
-			parseStruct(field)
+			err := parseStruct(field, flagSet)
+			if err != nil {
+				return Config{}, errors.Wrap(err, "Error parsing nested struct")
+			}
 			continue
 		}
 		fieldType := reflect.Indirect(reflectConfig).Type().Field(i)
-		parseField(field, &fieldType)
+		err := parseField(field, &fieldType, flagSet)
+		if err != nil {
+			return Config{}, errors.Wrap(err, "Error parsing struct field")
+		}
 	}
-	return config
+	return config, nil
 }
 
-func parseStruct(structToParse reflect.Value) {
+func parseStruct(structToParse reflect.Value, flagSet *flag.FlagSet) error {
 	for i := 0; i < structToParse.NumField(); i++ {
 		field := structToParse.Field(i)
 		if field.Kind() == reflect.Struct {
-			parseStruct(field)
+			err := parseStruct(field, flagSet)
+			if err != nil {
+				return errors.Wrap(err, "Error parsing nested struct")
+			}
 			continue
 		}
 		fieldType := structToParse.Type().Field(i)
-		parseField(field, &fieldType)
+		err := parseField(field, &fieldType, flagSet)
+		if err != nil {
+			return errors.Wrap(err, "Error parsing struct field")
+		}
 	}
+	return nil
 }
 
-func parseField(fieldToParse reflect.Value, fieldType *reflect.StructField) {
+func parseField(fieldToParse reflect.Value, fieldType *reflect.StructField, flagSet *flag.FlagSet) error {
 	tag := fieldType.Tag
 	flagName, exists := tag.Lookup("flag")
 	if !exists {
-		return
+		return nil
 	}
 	if fieldToParse.IsZero() {
-		overrideValue(&fieldToParse, flag.Lookup(flagName))
-		return
+		return errors.Wrap(overrideValue(&fieldToParse, flagSet.Lookup(flagName)), "Unable to override unset config value")
 	}
-	flag.Visit(func(f *flag.Flag) {
+	var visitError error
+	flagSet.Visit(func(f *flag.Flag) {
 		if f.Name == flagName {
-			overrideValue(&fieldToParse, f)
+			visitError = overrideValue(&fieldToParse, f)
 		}
 	})
-
+	return errors.Wrap(visitError, "Unable to override config value with set flag")
 }
 
-func overrideValue(field *reflect.Value, f *flag.Flag) {
+func overrideValue(field *reflect.Value, f *flag.Flag) error {
 	flagValue := f.Value
 	flagString := flagValue.String()
 	switch field.Type().Kind() {
@@ -113,34 +149,27 @@ func overrideValue(field *reflect.Value, f *flag.Flag) {
 	case reflect.Int:
 		atoi, err := strconv.Atoi(flagString)
 		if err != nil {
-			logrus.WithError(err).WithField("flag", f.Name).Error("unable to parse flag to int")
+			return errors.Wrapf(err, "unable to parse flag '%s' as int", f.Name)
 		}
 		field.SetInt(int64(atoi))
 
 	case reflect.Bool:
 		boolValue, err := strconv.ParseBool(flagString)
 		if err != nil {
-			logrus.WithError(err).WithField("flag", f.Name).Error("unable to parse flag to bool")
+			return errors.Wrapf(err, "unable to parse flag '%s' as bool", f.Name)
 		}
 		field.SetBool(boolValue)
+	default:
+		return errors.New("unsupported config type: " + field.Type().Kind().String())
 	}
+	return nil
 }
 
-func writeConfig(config Config) {
+func writeConfig(config Config, writer io.Writer) error {
 	configBytes, err := yaml.Marshal(config)
 	if err != nil {
-		logrus.WithError(err).Error("unable to marshal config")
-		return
+		return errors.Wrap(err, "couldn't marshal config")
 	}
-	file, err := os.OpenFile(flag.Lookup("config").Value.String(), os.O_WRONLY|os.O_CREATE, 0755)
-	if err != nil {
-		logrus.WithError(err).Error("unable to create config file")
-		return
-	}
-	defer file.Close()
-	_, err = file.Write(configBytes)
-	if err != nil {
-		logrus.WithError(err).Error("unable to write to config file")
-		return
-	}
+	_, err = writer.Write(configBytes)
+	return errors.Wrap(err, "couldn't write to config file")
 }

@@ -7,8 +7,8 @@ import (
 var configuration Config
 
 type Config struct {
-	LogrusLevel    logrus.Level
-	LogLevel       int `yaml:"log_level" flag:"logLevel"`
+	LogrusLevel    logrus.Level `yaml:"-"`
+	LogLevel       int          `yaml:"log_level" flag:"logLevel"`
 	NetworkConfigs struct {
 		SMTP struct {
 			Host string `flag:"smtpHost"`
