@@ -2,11 +2,13 @@ package main
 
 import (
 	"embed"
+	"flag"
 	"fmt"
 	"github.com/emersion/go-imap/server"
 	"github.com/gorilla/mux"
 	"github.com/mhale/smtpd"
 	"github.com/sirupsen/logrus"
+	"mailpie/pkg/config"
 	"mailpie/pkg/event"
 	"mailpie/pkg/handler"
 	"mailpie/pkg/handler/imap"
@@ -15,6 +17,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 )
@@ -27,25 +30,34 @@ const (
 	IMAP errorOrigin = "imap"
 )
 
-const listenOnAddress = "0.0.0.0"
-
 type errorState struct {
 	err    error
 	origin errorOrigin
 }
 
 func main() {
-	logrus.SetLevel(logrus.DebugLevel)
-
+	err := config.Load(flag.CommandLine, os.Args[1:])
+	if err != nil {
+		logrus.WithError(err).Fatal("Error during configuration setup")
+	}
+	logrus.SetLevel(config.GetConfig().LogrusLevel)
+	conf := config.GetConfig()
 	globalMessageQueue := event.CreateOrGet()
 	globalMailStore := store.CreateMailStore(*globalMessageQueue)
 
 	errorChannel := make(chan errorState)
-	go serveSPA(errorChannel)
+	if !conf.DisableHTTP {
+		go serveSPA(errorChannel)
+	}
 
-	smtpHandler := handler.CreateSmtpHandler(*globalMailStore)
-	go serveSMTP(errorChannel, smtpHandler)
-	go serveIMAP(errorChannel)
+	if !conf.DisableSMTP {
+		smtpHandler := handler.CreateSmtpHandler(*globalMailStore)
+		go serveSMTP(errorChannel, smtpHandler)
+	}
+
+	if !conf.DisableIMAP {
+		go serveIMAP(errorChannel)
+	}
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
@@ -65,7 +77,7 @@ func main() {
 }
 
 func serveSMTP(errorChannel chan errorState, smtpHandler handler.SmtpHandler) {
-	addr := listenOnAddress + ":1025"
+	addr := config.GetConfig().NetworkConfigs.SMTP.Host + ":" + strconv.Itoa(config.GetConfig().NetworkConfigs.SMTP.Port)
 	srv := &smtpd.Server{
 		Addr:         addr,
 		Handler:      smtpHandler.Handle,
@@ -94,7 +106,6 @@ var indexHtml string
 var dist embed.FS
 
 func serveSPA(errorChannel chan errorState) {
-
 	router := mux.NewRouter()
 	spa := handler.SpaHandler{
 		Dist:  dist,
@@ -104,7 +115,7 @@ func serveSPA(errorChannel chan errorState) {
 
 	srv := &http.Server{
 		Handler:      router,
-		Addr:         listenOnAddress + ":8000",
+		Addr:         config.GetConfig().NetworkConfigs.HTTP.Host + ":" + strconv.Itoa(config.GetConfig().NetworkConfigs.HTTP.Port),
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
@@ -120,9 +131,9 @@ func serveSPA(errorChannel chan errorState) {
 func serveIMAP(errorChannel chan errorState) {
 	be := imap.NewBackend()
 	s := server.New(be)
-	imapLogger := logrus.New()
+	imapLogger := logrus.StandardLogger()
 	s.Debug = imapLogger.Writer()
-	s.Addr = listenOnAddress + ":1143"
+	s.Addr = config.GetConfig().NetworkConfigs.IMAP.Host + ":" + strconv.Itoa(config.GetConfig().NetworkConfigs.IMAP.Port)
 	s.AllowInsecureAuth = true
 	logrus.WithField("Address", s.Addr).Info("Starting IMAP server")
 	err := s.ListenAndServe()
