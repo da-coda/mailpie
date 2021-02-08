@@ -12,9 +12,12 @@ import (
 	"strconv"
 )
 
-func Load(flags *flag.FlagSet) error {
-	initFlags()
-	flag.Parse()
+func Load(flags *flag.FlagSet, arguments []string) error {
+	initFlags(flags)
+	err := flags.Parse(arguments)
+	if err != nil {
+		return errors.Wrap(err, "Unable to parse flags")
+	}
 	createConfig := false
 	configPath := flags.Lookup("config").Value.String()
 	file, err := os.Open(configPath)
@@ -54,20 +57,20 @@ func Load(flags *flag.FlagSet) error {
 	return nil
 }
 
-func initFlags() {
-	flag.Int("logLevel", int(logrus.WarnLevel), "Possible log leves are:\n0 - Panic\n1 - Fatal\n2 - Error\n3 - Warn\n4 - Info\n5 - Debug\n6 - Trace")
-	flag.String("imapHost", "0.0.0.0", "IMAP-host which Mailpie is listening to - Use 127.0.0.1 for local access & 0.0.0.0 for network access")
-	flag.String("smtpHost", "0.0.0.0", "SMTP-host which Mailpie is listening to - Use 127.0.0.1 for local access & 0.0.0.0 for network access")
-	flag.String("httpHost", "0.0.0.0", "HTTP-host where Mailpie serves ths SPA - Use 127.0.0.1 for local access & 0.0.0.0 for network access")
-	flag.Int("imapPort", 1143, "IMAP-port where Mailpie is listening")
-	flag.Int("smtpPort", 1025, "SMTP-port where Mailpie is listening")
-	flag.Int("httpPort", 8000, "HTTP-port where Mailpie serves ths SPA")
-	flag.Bool("enableImap", true, "Enables the IMAP handler")
-	flag.Bool("enableSmtp", true, "Enables the SMTP handler")
-	flag.Bool("enableHttp", true, "Enables the SPA")
+func initFlags(flags *flag.FlagSet) {
+	flags.Int("logLevel", int(logrus.WarnLevel), "Possible log leves are:\n0 - Panic\n1 - Fatal\n2 - Error\n3 - Warn\n4 - Info\n5 - Debug\n6 - Trace")
+	flags.String("imapHost", "0.0.0.0", "IMAP-host which Mailpie is listening to - Use 127.0.0.1 for local access & 0.0.0.0 for network access")
+	flags.String("smtpHost", "0.0.0.0", "SMTP-host which Mailpie is listening to - Use 127.0.0.1 for local access & 0.0.0.0 for network access")
+	flags.String("httpHost", "0.0.0.0", "HTTP-host where Mailpie serves ths SPA - Use 127.0.0.1 for local access & 0.0.0.0 for network access")
+	flags.Int("imapPort", 1143, "IMAP-port where Mailpie is listening")
+	flags.Int("smtpPort", 1025, "SMTP-port where Mailpie is listening")
+	flags.Int("httpPort", 8000, "HTTP-port where Mailpie serves ths SPA")
+	flags.Bool("disableImap", false, "Disable the IMAP handler")
+	flags.Bool("disableSmtp", false, "Disable the SMTP handler")
+	flags.Bool("disableHttp", false, "Disable the SPA")
 	usr, _ := user.Current()
 	dir := usr.HomeDir
-	flag.String("config", dir+"/.config/mailpie.yml", "sets the config file path. If file not exits, MailPie will create one with default values.")
+	flags.String("config", dir+"/.config/mailpie.yml", "sets the config file path. If file not exits, MailPie will create one with default values.")
 }
 
 func parseConfig(config Config, file io.Reader) (Config, error) {

@@ -23,9 +23,9 @@ type Config struct {
 			Port int    `flag:"httpPort"`
 		}
 	}
-	EnableIMAP bool `yaml:"enable_imap" flag:"enableImap"`
-	EnableSMTP bool `yaml:"enable_smtp" flag:"enableSmtp"`
-	EnableHTTP bool `yaml:"enable_http" flag:"enableHttp"`
+	DisableIMAP bool `yaml:"disable_imap" flag:"disableImap"`
+	DisableSMTP bool `yaml:"disable_smtp" flag:"disableSmtp"`
+	DisableHTTP bool `yaml:"disable_http" flag:"disableHttp"`
 }
 
 func GetConfig() Config {
