@@ -36,19 +36,28 @@ type errorState struct {
 }
 
 func main() {
-	err := config.Load(flag.CommandLine)
-	logrus.WithError(err).Fatal("Error during configuration setup")
+	err := config.Load(flag.CommandLine, os.Args[1:])
+	if err != nil {
+		logrus.WithError(err).Fatal("Error during configuration setup")
+	}
 	logrus.SetLevel(config.GetConfig().LogrusLevel)
-	logrus.Debugf("Config: %+v\n", config.GetConfig())
+	conf := config.GetConfig()
 	globalMessageQueue := event.CreateOrGet()
 	globalMailStore := store.CreateMailStore(*globalMessageQueue)
 
 	errorChannel := make(chan errorState)
-	go serveSPA(errorChannel)
+	if !conf.DisableHTTP {
+		go serveSPA(errorChannel)
+	}
 
-	smtpHandler := handler.CreateSmtpHandler(*globalMailStore)
-	go serveSMTP(errorChannel, smtpHandler)
-	go serveIMAP(errorChannel)
+	if !conf.DisableSMTP {
+		smtpHandler := handler.CreateSmtpHandler(*globalMailStore)
+		go serveSMTP(errorChannel, smtpHandler)
+	}
+
+	if !conf.DisableIMAP {
+		go serveIMAP(errorChannel)
+	}
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
