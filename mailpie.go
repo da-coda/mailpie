@@ -36,7 +36,11 @@ type errorState struct {
 }
 
 func main() {
-	err := config.Load(flag.CommandLine, os.Args[1:])
+	Run(flag.CommandLine, os.Args[1:])
+}
+
+func Run(flags *flag.FlagSet, arguments []string) {
+	err := config.Load(flags, arguments)
 	if err != nil {
 		logrus.WithError(err).Fatal("Error during configuration setup")
 	}

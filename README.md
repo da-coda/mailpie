@@ -33,6 +33,7 @@ without any actual SMTP servers.
 #### Implemented
 Currently, MailPie only supports simple SMTP and IMAP. You are able to add MailPie as an SMTP server for your project
 and as an IMAP server for you mail client. Any mail sent via SMTP to MailPie will be visible in your mail client.
+You can configure MailPie by providing a config file or with CLI arguments.
 
 #### Planned
 - Webinterface with Vue 3 communicating over Server-Send-Events and REST Api with the backend
@@ -43,26 +44,7 @@ and as an IMAP server for you mail client. Any mail sent via SMTP to MailPie wil
 - Implement [spamassassin](https://github.com/Teamwork/spamc) support
 
 ## How to use MailPie?
-### SMTP - settings in your project
-1. Execute the MailPie binary or build the binary yourself
-2. Add MailPie as you SMTP Server to your project
-    - *Port*: 1025
-    - *Username*: any
-    - *Password*: any
-
-Due to the fact that MailPie only acts as a mail catcher in Dev and Test environments there
-is no credentials check needed.
-
-### IMAP & SMTP - settings in your mail client
-Add MailPie as a new account to your mail client
-- Email address, Username and Password can be anything
-
-![Mail Settings in Thunderbird 68][mail-settings]
-
-Currently, you will need to trigger the mail receiving manually in your mail client or set the auto update to a short 
-duration.
-
-[mail-settings]: readme/mail_settings.png
+[Documentation](https://github.com/da-coda/mailpie/wiki)
 
 ## Contact
 Daniel Müller - Twitter: [@da_coda_](https://twitter.com/da_coda_) - LinkedIn: [daniel96mueller](https://www.linkedin.com/in/daniel96mueller/) - E-Mail: [contact@daniel-mueller.de](mailto:contact@daniel-mueller.de)
