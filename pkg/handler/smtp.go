@@ -17,6 +17,8 @@ func CreateSmtpHandler(mailStore store.MailStore) SmtpHandler {
 	return SmtpHandler{mailStore: mailStore}
 }
 
+//Handle incoming emails. Parses the incoming mail into instances.Mail and then writes the mail into the mailStore with the key format
+// from_to_2006-01-02T15:04:05Z07:00
 func (handler *SmtpHandler) Handle(_ net.Addr, from string, to []string, data []byte) {
 	mail, err := instances.ParseMail(data)
 	if err != nil {

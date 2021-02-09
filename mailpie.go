@@ -39,6 +39,7 @@ func main() {
 	Run(flag.CommandLine, os.Args[1:])
 }
 
+//Run main entry point for mailpie. Loads the config, setup of globalMailStore and globalMessageQueue, starts all services
 func Run(flags *flag.FlagSet, arguments []string) {
 	err := config.Load(flags, arguments)
 	if err != nil {
@@ -80,6 +81,8 @@ func Run(flags *flag.FlagSet, arguments []string) {
 	}
 }
 
+//serveSMTP Setup SMTP-Server and run ListenAndServe. If some error occurs during service runtime, the error gets send to Run
+//via the errorChannel. Needs an SMTP handler which handles incoming mails
 func serveSMTP(errorChannel chan errorState, smtpHandler handler.SmtpHandler) {
 	addr := config.GetConfig().NetworkConfigs.SMTP.Host + ":" + strconv.Itoa(config.GetConfig().NetworkConfigs.SMTP.Port)
 	srv := &smtpd.Server{
@@ -88,6 +91,7 @@ func serveSMTP(errorChannel chan errorState, smtpHandler handler.SmtpHandler) {
 		Appname:      "Mailpie",
 		Hostname:     "localhost",
 		AuthRequired: false,
+		//currently no auth is needed and implemented, so always return true on login
 		AuthHandler: func(remoteAddr net.Addr, mechanism string, username []byte, password []byte, shared []byte) (bool, error) {
 			return true, nil
 		},
@@ -97,24 +101,24 @@ func serveSMTP(errorChannel chan errorState, smtpHandler handler.SmtpHandler) {
 		AuthMechs: map[string]bool{"PLAIN": true, "LOGIN": true, "CRAM-MD5": false},
 	}
 	logrus.WithField("Address", addr).Info("Starting SMTP server")
+	//run the server. In best case, this will never stop. If there is some error, send it to Run via errorChannel
 	err := srv.ListenAndServe()
 	if err != nil {
 		errorChannel <- errorState{err: err, origin: SMTP}
 	}
 }
 
+//embed the index html and the dist directory(introduced in go 1.16)
 //go:embed "dist/index.html"
 var indexHtml string
 
 //go:embed "dist"
 var dist embed.FS
 
+//serveSPA serve the MailPie Single-Page-Application
 func serveSPA(errorChannel chan errorState) {
 	router := mux.NewRouter()
-	spa := handler.SpaHandler{
-		Dist:  dist,
-		Index: indexHtml,
-	}
+	spa := handler.NewSpaHandler(dist, indexHtml)
 	router.PathPrefix("/").Handler(spa).Methods("GET")
 
 	srv := &http.Server{
@@ -132,6 +136,7 @@ func serveSPA(errorChannel chan errorState) {
 	}
 }
 
+//serveIMAP runs the IMAP server
 func serveIMAP(errorChannel chan errorState) {
 	be := imap.NewBackend()
 	s := server.New(be)

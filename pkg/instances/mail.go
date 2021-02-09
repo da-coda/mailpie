@@ -6,6 +6,7 @@ import (
 	gomail "net/mail"
 )
 
+//Mail is a wrapper struct around the go net/mail.Message struct. This allows us to throw it into the imap handler without magic stuff
 type Mail struct {
 	gomail.Message
 	RawMessage []byte
@@ -28,6 +29,7 @@ func (m *Mail) Len() int {
 	return len(m.RawMessage)
 }
 
+//ParseMail creates a Mail instance for a valid email. Calls net/mail.ReadMessage and returns any error occurring there
 func ParseMail(data []byte) (*Mail, error) {
 	parsedMail, err := gomail.ReadMessage(bytes.NewReader(data))
 	if err != nil {
