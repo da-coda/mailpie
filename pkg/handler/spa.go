@@ -1,45 +1,37 @@
 package handler
 
 import (
-	"embed"
 	"fmt"
 	"github.com/sirupsen/logrus"
+	"io/fs"
 	"net/http"
-	"os"
-	"path/filepath"
 )
 
 type SpaHandler struct {
-	Dist  embed.FS
+	Dist  fs.FS
 	Index string
 }
 
+func NewSpaHandler(dist fs.FS, index string) *SpaHandler {
+	return &SpaHandler{Dist: dist, Index: index}
+}
+
+//ServeHTTP handles incoming http requests. Always responds with the index.html if the request resource does not exist
 func (h SpaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	path, err := filepath.Abs(r.URL.Path)
+	path := fmt.Sprintf("%s%s", "dist", r.URL.Path)
+
+	_, err := h.Dist.Open(path)
+	//Respond with index.html
 	if err != nil {
-
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	path = fmt.Sprintf("%s%s", "dist", path)
-	r.URL.Path = path
-
-	_, err = h.Dist.Open(path)
-	if os.IsNotExist(err) {
 		w.Header().Set("Content-Type", "text/html")
 		bytesWritten, err := fmt.Fprint(w, h.Index)
 		if err != nil {
 			logrus.WithError(err).WithField("Bytes written", bytesWritten).Error("Unable to send index.html")
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 		return
-	} else if err != nil {
-		// if we got an error (that wasn't that the file doesn't exist) stating the
-		// file, return a 500 internal server error and stop
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
 	}
-
-	// otherwise, use http.FileServer to serve the static dir
+	//serve the requested file from the dist directory
+	r.URL.Path = path
 	http.FileServer(http.FS(h.Dist)).ServeHTTP(w, r)
 }
