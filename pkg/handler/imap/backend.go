@@ -1,12 +1,12 @@
 package imap
 
 import (
+	"github.com/da-coda/mailpie/pkg/event"
+	"github.com/da-coda/mailpie/pkg/instances"
+	"github.com/da-coda/mailpie/pkg/store"
 	"github.com/emersion/go-imap"
 	imapBackend "github.com/emersion/go-imap/backend"
 	"github.com/sirupsen/logrus"
-	"mailpie/pkg/event"
-	"mailpie/pkg/instances"
-	"mailpie/pkg/store"
 	"time"
 )
 

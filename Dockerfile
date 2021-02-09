@@ -1,7 +1,7 @@
 FROM golang:1.16rc1-alpine3.13 AS build
 WORKDIR /mailpie
 COPY ./ .
-RUN go build mailpie .
+RUN go build github.com/da-coda/mailpie .
 
 FROM alpine:3.13
 EXPOSE 1025

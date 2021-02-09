@@ -1,12 +1,12 @@
 package store
 
 import (
+	"github.com/da-coda/mailpie/pkg/event"
+	"github.com/da-coda/mailpie/pkg/instances"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	"io/ioutil"
-	"mailpie/pkg/event"
-	"mailpie/pkg/instances"
 	"testing"
 )
 
