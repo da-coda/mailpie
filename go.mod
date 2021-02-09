@@ -1,4 +1,4 @@
-module mailpie
+module github.com/da-coda/mailpie
 
 go 1.16
 
