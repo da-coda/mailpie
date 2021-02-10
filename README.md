@@ -47,4 +47,7 @@ You can configure MailPie by providing a config file or with CLI arguments.
 [Documentation](https://github.com/da-coda/mailpie/wiki)
 
 ## Contact
-Daniel Müller - Twitter: [@da_coda_](https://twitter.com/da_coda_) - LinkedIn: [daniel96mueller](https://www.linkedin.com/in/daniel96mueller/) - E-Mail: [contact@daniel-mueller.de](mailto:contact@daniel-mueller.de)
+Daniel Müller 
+- Twitter: [@da_coda_](https://twitter.com/da_coda_) 
+- LinkedIn: [daniel96mueller](https://www.linkedin.com/in/daniel96mueller/) 
+- E-Mail: [contact@daniel-mueller.de](mailto:contact@daniel-mueller.de)

@@ -11,22 +11,34 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Set up Go
-      uses: actions/setup-go@v2
-      with:
-        stable: false
-        go-version: 1.16.0-rc1
-    
-    - name: Setup Node.js environment
-      uses: actions/setup-node@v2.1.4      
-    
-    - name: Build Frontend
-      run: npm install && npm run build     
-    
-    - name: Build
-      run: go build -v ./...
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          stable: false
+          go-version: 1.16.0-rc1
 
-    - name: Test
-      run: go test -v ./...
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v2.1.4
+
+      - name: Build Frontend
+        run: npm install && npm run build
+
+      - name: Commit files
+        run: |
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git commit -m "Add vue dist" -a
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
+
+      - name: Build
+        run: go build -v ./...
+
+      - name: Test
+        run: go test -v ./...

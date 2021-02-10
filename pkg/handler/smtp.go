@@ -2,9 +2,9 @@ package handler
 
 import (
 	"fmt"
+	"github.com/da-coda/mailpie/pkg/instances"
+	"github.com/da-coda/mailpie/pkg/store"
 	"github.com/sirupsen/logrus"
-	"mailpie/pkg/instances"
-	"mailpie/pkg/store"
 	"net"
 	"time"
 )

@@ -1,8 +1,8 @@
 package store
 
 import (
-	"mailpie/pkg/event"
-	"mailpie/pkg/instances"
+	"github.com/da-coda/mailpie/pkg/event"
+	"github.com/da-coda/mailpie/pkg/instances"
 )
 
 const NewMailStoredEvent event.Event = "newMailStored"
