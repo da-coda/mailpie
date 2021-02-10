@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    if: github.event.label.name != 'dist_created'
+    if: "github.event.label.name != 'dist_created' || !contains(github.event.head_commit.message, '[ci skip]')"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -42,7 +42,8 @@ jobs:
         uses: peter-evans/create-pull-request@v3
         with:
           commit-message: create dist
-          title: Create dist directory
+          title: Create dist directory [ci skip]
           branch: create_dist
           base: main
           labels: dist_created
+          delete-branch: true
