@@ -44,5 +44,5 @@ jobs:
           commit-message: create dist
           title: Create dist directory
           branch: create_dist
-          base: master
+          base: main
           labels: dist_created
