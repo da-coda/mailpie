@@ -13,6 +13,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/mhale/smtpd"
 	"github.com/sirupsen/logrus"
+	"github.com/teamwork/spamc"
 	"net"
 	"net/http"
 	"os"
@@ -63,6 +64,10 @@ func Run(flags *flag.FlagSet, arguments []string) {
 	if !conf.DisableIMAP {
 		go serveIMAP(errorChannel)
 	}
+	c := spamc.New("127.0.0.1:783", &net.Dialer{
+		Timeout: 20 * time.Second,
+	})
+	_ = handler.NewSpamc(*c, globalMessageQueue)
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)

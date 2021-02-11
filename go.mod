@@ -9,6 +9,8 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.7.0
 	github.com/stretchr/testify v1.7.0
+	github.com/teamwork/spamc v0.0.0-20200109085853-a4e0c5c3f7a0 // indirect
+	github.com/teamwork/utils v0.0.0-20200714085143-9e9a9a82bda9 // indirect
 	golang.org/x/net v0.0.0-20210119194325-5f4716e94777
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/mail.v2 v2.3.1
