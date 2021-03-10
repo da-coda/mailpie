@@ -9,6 +9,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.7.0
 	github.com/stretchr/testify v1.7.0
+	golang.org/dl v0.0.0-20210204224843-1557c60ec592 // indirect
 	golang.org/x/net v0.0.0-20210119194325-5f4716e94777
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/mail.v2 v2.3.1
