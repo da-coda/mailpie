@@ -1,9 +1,12 @@
 package main
 
+//go:generate swagger generate spec -o ./swagger/swagger.yml
 import (
 	"embed"
 	"flag"
 	"fmt"
+	"github.com/da-coda/mailpie/pkg/api"
+	_ "github.com/da-coda/mailpie/pkg/api"
 	"github.com/da-coda/mailpie/pkg/config"
 	"github.com/da-coda/mailpie/pkg/event"
 	"github.com/da-coda/mailpie/pkg/handler"
@@ -28,6 +31,7 @@ const (
 	SMTP errorOrigin = "smtp"
 	SPA  errorOrigin = "spa"
 	IMAP errorOrigin = "imap"
+	API  errorOrigin = "api"
 )
 
 type errorState struct {
@@ -63,6 +67,8 @@ func Run(flags *flag.FlagSet, arguments []string) {
 	if !conf.DisableIMAP {
 		go serveIMAP(errorChannel)
 	}
+
+	go serveApi(errorChannel, globalMailStore)
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
@@ -148,6 +154,23 @@ func serveIMAP(errorChannel chan errorState) {
 	err := s.ListenAndServe()
 	if err != nil {
 		errorChannel <- errorState{err: err, origin: IMAP}
+	}
+}
+
+func serveApi(errorChannel chan errorState, mailStore *store.MailStore) {
+	baseRouter := api.NewBaseRouter(mailStore)
+	srv := &http.Server{
+		Handler:      baseRouter.Mux,
+		Addr:         config.GetConfig().NetworkConfigs.API.Host + ":" + strconv.Itoa(config.GetConfig().NetworkConfigs.API.Port),
+		WriteTimeout: 15 * time.Second,
+		ReadTimeout:  15 * time.Second,
+	}
+
+	logrus.WithField("Address", fmt.Sprintf("http://%s", srv.Addr)).Info("Starting API server")
+	//should run forever unless an error occurs
+	err := srv.ListenAndServe()
+	if err != nil {
+		errorChannel <- errorState{err: err, origin: API}
 	}
 }
 

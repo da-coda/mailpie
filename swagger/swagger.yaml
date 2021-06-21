@@ -1,0 +1,98 @@
+openapi: 3.0.3
+info:
+  title: MailPie
+  description: "This is the API documentation for the MailPie API. With the MailPie API you are able to query all received emails.
+    This API is also used internally for the web frontend."
+  version: 1.0.0
+  contact:
+    email: contact@daniel-mueller.de
+    name: Daniel Müller
+    url: "github.com/da-coda"
+
+servers:
+  - url: localhost
+    description: "This API runs locally with your MailPie instance"
+
+paths:
+  /v1/mail:
+    get:
+      description: "Returns simple list of received emails"
+      responses:
+        200:
+          description: "A list of all emails"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Email"
+
+components:
+  schemas:
+    subject:
+      type: string
+      description: "Mail subject"
+    from:
+      type: string
+      description: "Sender address"
+    to:
+      type: array
+      items:
+        type: string
+      description: "All Recipient addresses"
+    mail_id:
+      type: string
+      description: "Internal id of an email"
+
+    Email:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/mail_id"
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+          description: "All headers send with the email"
+          items:
+            type: string
+        subject:
+          $ref: "#/components/schemas/subject"
+        from:
+          $ref: "#/components/schemas/from"
+        to:
+          $ref: "#/components/schemas/to"
+        cc:
+          type: array
+          items:
+            type: string
+          description: "All CC addresses"
+        bcc:
+          type: array
+          items:
+            type: string
+          description: "All BCC addresses"
+      example:
+        headers:
+          Content-Type: "application/json; charset=utf-8"
+          Mime-Version: "1.0"
+        subject: "This is an example Mail"
+        from: "test@test.de"
+        to:
+          - "recipient@test.de"
+          - "testest@test.de"
+        cc:
+          - "cc@test.de"
+        bcc:
+
+    EmailInfo:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/mail_id"
+        to:
+          $ref: "#/components/schemas/to"
+        from:
+          $ref: "#/components/schemas/from"
+        subject:
+          $ref: "#/components/schemas/subject"

@@ -65,3 +65,7 @@ func (store *MailStore) GetMultiple(keys []string) (mails map[string]instances.M
 	}
 	return
 }
+
+func (store *MailStore) GetAll() (mails map[string]instances.Mail) {
+	return store.mails
+}

@@ -22,6 +22,10 @@ type Config struct {
 			Host string `flag:"httpHost"`
 			Port int    `flag:"httpPort"`
 		}
+		API struct {
+			Host string `flag:"apiHost"`
+			Port int    `flag:"apiPort"`
+		}
 	}
 	DisableIMAP bool `yaml:"disable_imap" flag:"disableImap"`
 	DisableSMTP bool `yaml:"disable_smtp" flag:"disableSmtp"`
